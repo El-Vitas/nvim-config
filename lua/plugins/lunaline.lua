@@ -1,0 +1,12 @@
+return {
+  'nvim-lualine/lualine.nvim',
+  dependencies = { 'nvim-tree/nvim-web-devicons' },
+  event = "VeryLazy",
+  opts = {
+    options = {
+      theme = "auto", -- It will now correctly inherit Macchiato
+      globalstatus = true,
+    },
+  },
+}
+
