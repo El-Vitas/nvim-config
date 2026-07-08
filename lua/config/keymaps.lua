@@ -35,6 +35,7 @@ local lines = {
   "    <leader>rl rL rp   list / list-file / peek",
   "    <leader>rn ri rs   view normal / inline / split   <leader>rv cycle",
   "    <leader>rg         list changes       ]r  [r  jump change",
+  "    <leader>rb         select comparison base (HEAD / index / commit)",
   "    <leader>ryf rya    yank comments (file / all)",
   "    <leader>rh         hide / show comments",
   "    <leader>s          sidebar (changed / all)",
