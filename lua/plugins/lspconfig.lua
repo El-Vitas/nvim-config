@@ -5,6 +5,9 @@ return {
     config = function()
       local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
+      -- NUEVO: Color blanco crema para los Inlay Hints
+      vim.api.nvim_set_hl(0, "LspInlayHint", { fg = "#BDBDBD", bg = "NONE", italic = true })
+
       -- Interceptamos el motor de Neovim para forzar el límite de 30 caracteres
       local inlay_hint_handler = vim.lsp.handlers["textDocument/inlayHint"]
       vim.lsp.handlers["textDocument/inlayHint"] = function(err, result, ctx, config)
@@ -56,17 +59,10 @@ return {
         settings = {
           typescript = {
             inlayHints = {
-              -- Apaga nombres (initialState:)
               parameterNames = { enabled = "none" },
-              
-              -- Apaga tipos obvios de variables (const updateField : Type)
               variableTypes = { enabled = false },
-              
-              -- Apaga tipos inferidos en callbacks (prev : Type) o (i : string)
               parameterTypes = { enabled = false },
               propertyDeclarationTypes = { enabled = false },
-              
-              -- Mantiene los retornos de las funciones (: void =>) como en VS Code
               functionLikeReturnTypes = { enabled = true },
             },
           },

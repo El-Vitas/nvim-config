@@ -13,7 +13,12 @@ if not (vim.uv or vim.loop).fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 vim.opt.termguicolors = true
-vim.opt.guifont = "CaskaydiaCove Nerd Font Mono:h12"
+vim.opt.guifont = "CaskaydiaCove Nerd Font:h12"
+
+-- Deshabilitar netrw: neo-tree maneja los directorios. Sin esto, abrir `nvim .`
+-- (o un directorio) muestra el listado feo de netrw.
+vim.g.loaded_netrw = 1
+vim.g.loaded_netrwPlugin = 1
 -- Critical Session Settings
 vim.opt.sessionoptions = "buffers,curdir,tabpages,winsize,help,globals,terminal,localoptions"
 
@@ -21,24 +26,16 @@ vim.opt.sessionoptions = "buffers,curdir,tabpages,winsize,help,globals,terminal,
 vim.g.mapleader = " "
 vim.g.maplocalleader = "\\"
 
+-- Keymaps propios (después del leader, si no `<leader>?` quedaría con el leader viejo).
+require("config.keymaps")
+require("config.buffers") -- límite de buffers abiertos (cola de 5)
+
 -- Setup lazy.nvim
 require("lazy").setup({
   spec = {
     { import = "plugins" },
   },
-  install = { colorscheme = { "catppuccin" } },
-  checker = { enabled = true },
-})
-
--- Auto-restore trigger
-vim.api.nvim_create_autocmd("VimEnter", {
-  group = vim.api.nvim_create_augroup("persistence_restore", { clear = true }),
-  callback = function()
-    if vim.fn.argc() == 0 and not vim.g.started_with_stdin then
-      pcall(function()
-        require("persistence").load()
-      end)
-    end
-  end,
+  install = { colorscheme = { "onedark_vivid" } },
+  checker = { enabled = false }, -- sin notificación de "Plugin Updates" al arrancar
 })
 

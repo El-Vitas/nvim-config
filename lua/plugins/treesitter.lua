@@ -28,13 +28,10 @@ return {
           local ft = vim.bo[args.buf].filetype
           local bt = vim.bo[args.buf].buftype
           
-          -- TU LISTA NEGRA: Mantenida exactamente como la pediste
-          local ignore_ft = { 
-            "NeogitStatus", 
-            "NeogitCommitMessage", 
-            "DiffviewFiles", 
-            "TelescopePrompt", 
-            "toggleterm" 
+          -- Filetypes donde NO arrancamos treesitter (buffers de UI de plugins)
+          local ignore_ft = {
+            "TelescopePrompt",
+            "toggleterm"
           }
           
           if vim.tbl_contains(ignore_ft, ft) or bt ~= "" then 

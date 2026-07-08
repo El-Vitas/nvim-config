@@ -14,12 +14,12 @@ return {
     
     -- Register a dummy group so Which-Key has something to show
     wk.add({
-      { "<leader>f", group = "file" }, -- group
-      { "<leader>ff", "<cmd>Telescope find_files<cr>", desc = "Find File" },
+      { "<leader>f", group = "find" },
       { "<leader>fn", "<cmd>enew<cr>", desc = "New File" },
-      { "<leader>h", group = "Git Hunk" },
       { "<leader>t", group = "Toggles" },
-      { "<leader>g", group = "Git" },
+      { "<leader>r", group = "Review" },
+      { "<leader>h", group = "Harpoon" },
+      { "<leader>q", group = "Session" },
     })
   end,
 }

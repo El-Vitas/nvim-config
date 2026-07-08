@@ -51,8 +51,8 @@ return {
         }),
 
         sources = cmp.config.sources({
-          { 
-            name = "nvim_lsp", 
+          {
+            name = "nvim_lsp",
             priority = 1000,
             entry_filter = function(entry, ctx)
               return require('cmp.types').lsp.CompletionItemKind[entry:get_kind()] ~= 'Text'

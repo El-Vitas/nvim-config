@@ -13,6 +13,8 @@ return {
 
       -- 2. Ver el menú (la lista de archivos arponeados)
       vim.keymap.set("n", "<C-h>", function() harpoon.ui:toggle_quick_menu(harpoon:list()) end, { desc = "Harpoon Menu" })
+      -- Alias discoverable (aparece en which-key)
+      vim.keymap.set("n", "<leader>hh", function() harpoon.ui:toggle_quick_menu(harpoon:list()) end, { desc = "Harpoon menu (list)" })
 
       -- 3. Saltar directo a los archivos (Navegación ultra rápida)
       -- Usa Alt + número para saltar entre tus 4 archivos principales
