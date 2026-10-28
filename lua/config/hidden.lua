@@ -12,7 +12,7 @@
 -- (node_modules, dist, build…). Apagado los esconde, encendido los muestra.
 --
 --   • DOTFILES (.env, .gitignore): SIEMPRE visibles, en las dos herramientas.
---     No son "basura generada", son archivos del proyecto que querés ver.
+--     No son "basura generada", son archivos del proyecto que quieres ver.
 --   • `.git/`: NUNCA se muestra, ni con el interruptor encendido. Mostrar
 --     ignorados no es listar los objetos internos del repositorio.
 --
@@ -162,21 +162,26 @@ local function paths_visibles(st)
   return out
 end
 
---- ¿Alguno de esos paths está ignorado por git? Una sola llamada con `--stdin`.
+--- ¿Alguno de esos paths está ignorado por git? Una sola llamada con `--stdin`,
+--- ASÍNCRONA: corre tras cada render del árbol, y esperarla con `:wait()`
+--- bloqueaba la UI en cada apertura. Llama `cb(true)` si hay ignorados a la vista.
 --- `check-ignore` sale con código 1 cuando no matchea nada, así que lo que vale
 --- es si escribió algo en stdout, no el exit code.
-local function hay_ignorados_a_la_vista(root, paths)
-  if not root or #paths == 0 then return false end
-  local ok, res = pcall(function()
-    return vim.system({ "git", "-C", root, "check-ignore", "--stdin" },
-      { stdin = table.concat(paths, "\n"), text = true }):wait()
-  end)
-  return ok and res and (res.stdout or "") ~= ""
+local function hay_ignorados_a_la_vista(root, paths, cb)
+  if not root or #paths == 0 then return cb(false) end
+  local ok = pcall(vim.system, { "git", "-C", root, "check-ignore", "--stdin" },
+    { stdin = table.concat(paths, "\n"), text = true },
+    vim.schedule_wrap(function(res) cb((res.stdout or "") ~= "") end))
+  if not ok then cb(false) end
 end
+
+-- Evita lanzar una verificación nueva mientras la anterior sigue corriendo (una
+-- ráfaga de renders dispararía varios procesos git en paralelo).
+local verificando = false
 
 local function asegurar_filtro()
   -- Con el interruptor encendido los ignorados DEBEN verse: nada que hacer.
-  if M.enabled or not neotree_a_la_vista() then return end
+  if verificando or M.enabled or not neotree_a_la_vista() then return end
   local ok, mgr = pcall(require, "neo-tree.sources.manager")
   if not ok then return end
   local st = mgr.get_state("filesystem")
@@ -185,13 +190,18 @@ local function asegurar_filtro()
   -- El root es el directorio que el árbol tiene abierto (`st.path`), no el padre
   -- del primer nodo: ese padre queda FUERA del repo y `check-ignore` fallaba en
   -- silencio, dando siempre "no hay ignorados".
-  if not hay_ignorados_a_la_vista(st.path, paths_visibles(st)) then
-    intentos = 0 -- el árbol ya está bien
-    return
-  end
-  if intentos >= MAX_INTENTOS then return end
-  intentos = intentos + 1
-  apply_neotree() -- re-navega; su render vuelve a entrar acá y re-verifica
+  verificando = true
+  hay_ignorados_a_la_vista(st.path, paths_visibles(st), function(hay)
+    verificando = false
+    if not hay then
+      intentos = 0 -- el árbol ya está bien
+      return
+    end
+    -- El interruptor pudo cambiar mientras git respondía.
+    if M.enabled or intentos >= MAX_INTENTOS then return end
+    intentos = intentos + 1
+    apply_neotree() -- re-navega; su render vuelve a entrar acá y re-verifica
+  end)
 end
 
 function M.setup()
@@ -206,7 +216,14 @@ function M.setup()
     callback = function()
       local ok, ev = pcall(require, "neo-tree.events")
       if not ok then return end
-      ev.subscribe({ event = ev.AFTER_RENDER, handler = vim.schedule_wrap(asegurar_filtro) })
+      -- Solo los renders del árbol de archivos: el de cambios (git_status) no
+      -- tiene ignorados que filtrar y no debe disparar la verificación.
+      ev.subscribe({
+        event = ev.AFTER_RENDER,
+        handler = function(state)
+          if state and state.name == "filesystem" then vim.schedule(asegurar_filtro) end
+        end,
+      })
     end,
   })
   vim.api.nvim_create_autocmd({ "BufWinLeave", "WinClosed" }, {
