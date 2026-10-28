@@ -42,22 +42,36 @@ rules:
         given: El árbol de cambios muestra c.ts por la base elegida
         when: El usuario cierra y reabre el árbol con <leader>e
         then: c.ts sigue apareciendo
-  - id: BR-53dca84
+  - id: BR-639a5ce
     status: active
-    title: Abrir el árbol y cambiar de buffer no traban el editor
+    title: Abrir el árbol y cambiar de archivo no traban el editor
     rule: >-
       Abrir o cambiar el modo del árbol (<leader>e, <leader>s) bloquea el editor menos de 100 ms, y cambiar de buffer
       con el árbol abierto menos de 5 ms, en un proyecto de 1 400 archivos con una carpeta ignorada de más de 500 000
-      archivos.
+      archivos. Abrir un archivo por primera vez en la sesión bloquea menos de 100 ms, también con una base de
+      comparación lejana y también después de volver al editor desde otra ventana. Solo se admite un costo mayor si se
+      abre un tipo de archivo nuevo en el primer segundo y medio después de arrancar.
     why: >-
-      Son las acciones que el usuario hace decenas de veces por hora; antes tardaban hasta 4,5 s y 40 ms y era la queja
-      principal.
-    context: Medido en FastCase con Neovim 0.12.6 sin interfaz. Mediciones y causas en docs/decisions.md (D-01 a D-05).
+      Son las acciones que el usuario hace decenas de veces por hora. Antes tardaban hasta 4,5 s y 40 ms, y abrir un
+      archivo trababa hasta 700 ms "a veces" (la primera vez de cada tipo de archivo, y al volver del navegador). Era la
+      queja principal.
+    context: >-
+      Medido en FastCase con Neovim 0.12.6 sin interfaz, base efe1a41 (22 commits atrás, 1 439 archivos cambiados).
+      Mediciones y causas en docs/decisions.md (D-01 a D-05, D-21) y review-mode/docs/decisions.md (B22).
+    supersedes: BR-53dca84
     scenarios:
       - title: Árbol de cambios en un repo con node_modules grande
         given: Un repo con 1 400 archivos versionados y node_modules ignorado con 571 000 archivos
         when: El usuario aprieta <leader>s
         then: El árbol de cambios aparece en menos de 100 ms
+      - title: Primer archivo TSX de la sesión
+        given: El editor arrancó hace unos segundos y todavía no se abrió ningún .tsx
+        when: El usuario abre un .tsx
+        then: Se abre en menos de 100 ms
+      - title: Volver del navegador
+        given: El usuario estuvo en otra ventana y git no cambió
+        when: Vuelve al editor y abre un archivo nuevo respecto de la base
+        then: Se abre en menos de 100 ms
   - id: BR-745f9f6
     status: active
     title: El marcador de archivo abierto refleja lo que está a la vista
@@ -127,3 +141,20 @@ rules:
         given: El árbol está en modo cambios y el archivo actual no tiene cambios
         when: El usuario aprieta <leader>E
         then: Aparece un aviso y el árbol sigue en modo cambios
+  - id: BR-53dca84
+    status: superseded
+    title: Abrir el árbol y cambiar de buffer no traban el editor
+    rule: >-
+      Abrir o cambiar el modo del árbol (<leader>e, <leader>s) bloquea el editor menos de 100 ms, y cambiar de buffer
+      con el árbol abierto menos de 5 ms, en un proyecto de 1 400 archivos con una carpeta ignorada de más de 500 000
+      archivos.
+    why: >-
+      Son las acciones que el usuario hace decenas de veces por hora; antes tardaban hasta 4,5 s y 40 ms y era la queja
+      principal.
+    context: Medido en FastCase con Neovim 0.12.6 sin interfaz. Mediciones y causas en docs/decisions.md (D-01 a D-05).
+    superseded_by: BR-639a5ce
+    scenarios:
+      - title: Árbol de cambios en un repo con node_modules grande
+        given: Un repo con 1 400 archivos versionados y node_modules ignorado con 571 000 archivos
+        when: El usuario aprieta <leader>s
+        then: El árbol de cambios aparece en menos de 100 ms

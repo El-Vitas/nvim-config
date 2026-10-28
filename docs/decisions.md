@@ -12,6 +12,8 @@ Las mediciones son de Neovim sin interfaz (`--headless`) en el repo FastCase: 1 
 | `<leader>e` (abrir el árbol de archivos) | 41 ms | 6–11 ms |
 | Cambiar de buffer | 41 ms | 0,5–0,6 ms |
 | Abrir un proyecto JS/TS (vigilancia de archivos del LSP) | 4 600 ms bloqueado | delegado a `inotifywait` |
+| Abrir un archivo por primera vez en la sesión (D-21) | 270–490 ms | 12–35 ms |
+| Abrir un archivo al volver del navegador (D-21) | hasta 708 ms | 3–10 ms |
 | Arranque hasta la primera pantalla | ~265 ms | ~265 ms |
 
 El arranque no cambió. Lo domina abrir el primer archivo (las queries de resaltado de TypeScript cuestan ~70 ms y review-mode carga sus módulos). Pasar plugins a carga diferida ahorró poco frente a eso.
@@ -212,4 +214,27 @@ La base es para comparar (signos, vistas). El blame tiene que decir quién escri
 - **Verificado:** en FastCase, la línea 3 de `pagination.constants.ts` muestra `191787f` y una línea editada sin guardar sigue mostrando "Not Committed Yet".
 - **Costo:** con base de commit, posar el cursor en una línea cambiada corre un `git blame -L` de esa línea, igual que en cualquier línea sin cambios.
 - **Si gitsigns cambia la API:** sin `run_blame` o `CacheEntry.get_blame`, la config avisa al arrancar.
+- **Path del archivo:** el parche lo saca del buffer y no de `obj.file`. En un renombrado, gitsigns arma `obj.file` con el path de la base que devuelve D-16 (`lua/gitsigns/git.lua:345`), y ese path no existe en HEAD. Con `obj.file`, `data-table-pagination.tsx` (renombrado desde `apps/web`) daba "Not Committed Yet"; ahora da `191787f`, igual que `git blame`.
+- **Sin bloquear:** los dos parches consultan git con `repo:command`, que corre dentro de la corrutina de gitsigns. La primera versión usaba `vim.system():wait()` y trababa la interfaz entre 4 y 68 ms.
+
+## D-21 · Abrir un archivo no espera a treesitter ni a git
+
+`lua/plugins/treesitter.lua` y, en review-mode, `lua/review/core/git.lua` (B22).
+
+Reportado el 2026-10-28: "al cambiar entre archivos a veces demora mucho". Se midió en FastCase con la base `efe1a41`, abriendo cinco archivos por primera vez, volviendo a ellos y volviendo del navegador (`FocusGained`). Volver a un archivo ya abierto costaba 1–7 ms. Lo lento era la primera vez, y había tres causas.
+
+1. **Compilar las consultas de treesitter.** Neovim compila la consulta de resaltado e inyecciones de un lenguaje la primera vez que la usa en la sesión, en C y bloqueando: TypeScript 155 ms, TSX 180 ms, JavaScript 75 ms. El perfilador de LuaJIT atribuyó el 74 % de la apertura a `vim/treesitter/query.lua:375`. Ahora se compilan antes, una consulta por paso (80 ms como mucho) con un temporizador que empieza 1,5 s después de cargar la config y que cada tecla pospone un segundo. Verificado con teclas reales cada 100 ms durante 4 s: no compiló nada mientras se tecleaba, y terminó 3 s después de parar.
+2. **Los renombrados de review contra la base.** Detectarlos le cuesta a git ~115 ms por `git diff -M` en ese repo, y review corría dos de forma sincrónica la primera vez que se abría un archivo que no existe en la base. Además tiraba el resultado en cada `FocusGained`, así que al volver del navegador se pagaba otra vez: hasta 708 ms. Detalle y arreglo en review-mode B22.
+3. **El parche del blame** (D-20) bloqueaba con `vim.system():wait()`. Pasó a `repo:command`.
+
+| Primera apertura en la sesión | Antes | Después |
+|---|---|---|
+| `app.module.ts` (primer TypeScript) | 291–368 ms | 29–43 ms |
+| `data-table-pagination.tsx` (primer TSX) | 262–277 ms | 17–22 ms |
+| `pagination.constants.ts` (no existe en la base) | 319–493 ms | 12–25 ms |
+| El mismo archivo al volver del navegador | 272–708 ms | 8–10 ms |
+
+Queda un caso sin cubrir. Si en el primer segundo y medio después de arrancar se abre un tipo de archivo que todavía no tiene su consulta compilada, se paga la compilación como antes. Arrancar Neovim abriendo un archivo no está en ese caso, porque el arranque ya incluye su consulta.
+
+Se descartó compilar todo en el arranque: suma ~530 ms bloqueados antes de la primera pantalla. Neovim tampoco guarda en disco las consultas compiladas, así que no hay forma de evitar compilarlas una vez por sesión.
 

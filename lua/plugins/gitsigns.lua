@@ -50,13 +50,15 @@ return {
             return require("review.core").git.rename_source(relpath, top, revision)
           end)
           if not (rok and old) then return info, err end
-          local sha = vim.fn.system({ "git", "-C", top, "rev-parse", revision .. ":" .. old })
-          if vim.v.shell_error ~= 0 then return info, err end
+          -- `self:command` corre dentro de la corrutina de gitsigns: no traba la UI.
+          local out, _, code = self:command({ "rev-parse", "--verify", "--quiet", revision .. ":" .. old },
+            { ignore_error = true })
+          if code ~= 0 or not out[1] or out[1] == "" then return info, err end
           -- `relpath = old` replica lo que devuelve upstream cuando el rename SÍ
           -- se resuelve (ls_tree del path viejo), para no divergir de su contrato.
           return {
             relpath = old,
-            object_name = (sha:gsub("%s+$", "")),
+            object_name = out[1],
             mode_bits = info.mode_bits or "100644",
           }
         end
@@ -75,16 +77,26 @@ return {
         return
       end
       local orig_blame = Blame.run_blame
+      local gs_cache = require("gitsigns.cache").cache
+      -- Path actual del archivo. No sirve `obj.file`: en un renombrado gitsigns
+      -- lo arma con el path de la BASE (el que devuelve el parche de arriba).
+      local function current_path(obj)
+        for bufnr, entry in pairs(gs_cache) do
+          if entry.git_obj == obj and vim.api.nvim_buf_is_valid(bufnr) then
+            return vim.fn.resolve(vim.api.nvim_buf_get_name(bufnr))
+          end
+        end
+      end
       Blame.run_blame = function(obj, contents, lnum, revision, blame_opts)
         if not revision or revision == "" or vim.startswith(revision, ":") or not contents then
           return orig_blame(obj, contents, lnum, revision, blame_opts)
         end
         local top = obj.repo and obj.repo.toplevel
-        -- Path actual del archivo (en un renombrado, `relpath` es el de la base).
-        local rel = top and vim.fs.relpath(top, obj.file)
+        local path = current_path(obj)
+        local rel = top and path and vim.fs.relpath(vim.fn.resolve(top), path)
         if not rel then return orig_blame(obj, contents, lnum, revision, blame_opts) end
-        local in_head = vim.system({ "git", "-C", top, "cat-file", "-e", "HEAD:" .. rel }):wait().code == 0
-        if not in_head then return orig_blame(obj, contents, lnum, revision, blame_opts) end
+        local _, _, code = obj.repo:command({ "cat-file", "-e", "HEAD:" .. rel }, { ignore_error = true })
+        if code ~= 0 then return orig_blame(obj, contents, lnum, revision, blame_opts) end
         local head_obj = setmetatable(
           { object_missing = false, object_name = obj.object_name or "HEAD", relpath = rel },
           { __index = obj })
