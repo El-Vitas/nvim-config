@@ -1,10 +1,12 @@
--- Paleta alineada a pi (vitas.json): morado, dorado y verde potente.
+-- Paleta alineada a pi (vitas.json): morado, dorado y verde potente. Los colores
+-- compartidos vienen de config.palette; los fondos de la barra son solo de acá.
+local p = require("config.palette")
 local c = {
-  purple = "#c6a0f6",
-  gold   = "#eed49f",
-  green  = "#9ece6a", -- verde potente
-  blue   = "#8aadf4", -- indicador "md split"
-  fg     = "#cad3f5",
+  purple = p.purple,
+  gold   = p.gold,
+  green  = p.green_bright, -- verde potente
+  blue   = p.blue, -- indicador "md split"
+  fg     = p.fg,
   mid    = "#363a4f",
   dark   = "#181926",
 }
@@ -29,7 +31,7 @@ local theme = {
   },
 }
 
-local dim = "#6b7089"
+local dim = p.dim
 
 -- ── Indicadores de estado ─────────────────────────────────────────────────────
 -- Cada uno devuelve texto + color en UNA función, y los wrappers de lualine la
@@ -147,9 +149,9 @@ return {
           symbols = { added = "N ", modified = "M ", removed = "D " },
           -- Misma paleta que neo-tree/scrollbar/gitsigns.
           diff_color = {
-            added = { fg = "#a6e3a1" },
-            modified = { fg = "#fab387" },
-            removed = { fg = "#f38ba8" },
+            added = { fg = p.green },
+            modified = { fg = p.orange },
+            removed = { fg = p.red },
           },
         },
       },
@@ -191,7 +193,7 @@ return {
           color = function()
             local ok, agent = pcall(require, "review.features.agent")
             if ok and agent._on then return { fg = c.green, gui = "bold" } end
-            return { fg = "#6b7089" } -- tenue cuando está apagado
+            return { fg = dim } -- tenue cuando está apagado
           end,
         },
         { "diagnostics", sources = { "nvim_lsp" }, symbols = { error = " ", warn = " ", info = " ", hint = " " } },

@@ -91,6 +91,12 @@ local GROUPS = {
         { "K", "hover docs" },
         { "gd", "go to definition" },
         { "gl", "diagnostic float" },
+        { "grn", "rename symbol" },
+        { "grr", "references" },
+        { "gri", "implementation" },
+        { "grt", "type definition" },
+        { "gra", "code action" },
+        { "gO", "document symbols" },
       } },
       { "WINDOWS & TABS", {
         { "<C-w>h  <C-w>l", "focus code ↔ sidebar" },
@@ -128,11 +134,12 @@ local PANELS = {
 -- `default = true` → si tú defines el grupo, el tuyo gana. Se re-aplican en cada
 -- apertura porque un cambio de colorscheme limpia los grupos.
 local function set_highlights()
+  local p = require("config.palette")
   local hl = {
-    CheatBanner = { fg = "#c6a0f6", bold = true },  -- morado: separador de bloque
-    CheatSection = { fg = "#eed49f", bold = true }, -- dorado: título de sección
-    CheatKey = { fg = "#9ece6a" },                  -- verde: la tecla (ancla de escaneo)
-    CheatPanel = { fg = "#8aadf4" },                -- azul: nombre del panel
+    CheatBanner = { fg = p.purple, bold = true },  -- morado: separador de bloque
+    CheatSection = { fg = p.gold, bold = true },   -- dorado: título de sección
+    CheatKey = { fg = p.green_bright },            -- verde: la tecla (ancla de escaneo)
+    CheatPanel = { fg = p.blue },                  -- azul: nombre del panel
   }
   for name, opts in pairs(hl) do
     opts.default = true
@@ -302,11 +309,7 @@ local function cheatsheet()
     footer = scrolls and " j k  scroll  ·  q  close " or "  q  close  ",
     footer_pos = "center",
   }
-  local ok, win = pcall(vim.api.nvim_open_win, buf, true, cfg)
-  if not ok then -- Neovim sin soporte de `footer`: abrir igual, sin él.
-    cfg.footer, cfg.footer_pos = nil, nil
-    win = vim.api.nvim_open_win(buf, true, cfg)
-  end
+  local win = vim.api.nvim_open_win(buf, true, cfg)
 
   vim.wo[win].cursorline = true
   -- Sin wrap: <leader>w puede dejar `wrap` global en on y partiría las columnas.

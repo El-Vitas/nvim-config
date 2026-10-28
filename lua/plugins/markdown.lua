@@ -16,20 +16,9 @@
 -- se muestra cruda (`anti_conceal`) para editar sin adivinar.
 
 -- ── Paleta ────────────────────────────────────────────────────────────────────
--- Los mismos tokens de lualine / neo-tree, para que markdown se sienta parte del
--- tema y no un plugin pegado encima.
-local c = {
-  purple = "#c6a0f6",
-  gold   = "#eed49f",
-  green  = "#a6e3a1",
-  blue   = "#8aadf4",
-  teal   = "#8bd5ca",
-  pink   = "#f5bde6",
-  orange = "#fab387",
-  red    = "#f38ba8",
-  fg     = "#cad3f5",
-  dim    = "#6b7089",
-}
+-- Los mismos tokens de lualine / neo-tree (config.palette), para que markdown
+-- se sienta parte del tema y no un plugin pegado encima.
+local c = require("config.palette")
 -- Fondos: tintes oscuros del color de cada nivel. Suficiente contraste para leer
 -- el texto encima, suficiente diferencia entre niveles para ver la jerarquía de
 -- un vistazo sin tener que contar los `#`.
