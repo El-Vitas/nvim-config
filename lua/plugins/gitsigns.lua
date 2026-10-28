@@ -61,6 +61,75 @@ return {
           }
         end
       end
+
+      -- PARCHE: con una base explícita gitsigns corre `git blame <base>`, así que
+      -- toda línea cambiada después de la base sale como "Not Committed Yet"
+      -- aunque esté commiteada. La base es para COMPARAR (signos, vistas); el
+      -- blame tiene que decir quién escribió la línea. Si el archivo existe en
+      -- HEAD, se culpa contra HEAD; si no existe (nuevo de verdad), queda el
+      -- "Not Committed Yet" de gitsigns, que ahí es correcto. Ver D-20.
+      local Blame = require("gitsigns.git.blame")
+      if type(Blame.run_blame) ~= "function" then
+        vim.notify("gitsigns: run_blame changed, blame-vs-HEAD patch not applied (see docs/decisions.md D-20)",
+          vim.log.levels.WARN)
+        return
+      end
+      local orig_blame = Blame.run_blame
+      Blame.run_blame = function(obj, contents, lnum, revision, blame_opts)
+        if not revision or revision == "" or vim.startswith(revision, ":") or not contents then
+          return orig_blame(obj, contents, lnum, revision, blame_opts)
+        end
+        local top = obj.repo and obj.repo.toplevel
+        -- Path actual del archivo (en un renombrado, `relpath` es el de la base).
+        local rel = top and vim.fs.relpath(top, obj.file)
+        if not rel then return orig_blame(obj, contents, lnum, revision, blame_opts) end
+        local in_head = vim.system({ "git", "-C", top, "cat-file", "-e", "HEAD:" .. rel }):wait().code == 0
+        if not in_head then return orig_blame(obj, contents, lnum, revision, blame_opts) end
+        local head_obj = setmetatable(
+          { object_missing = false, object_name = obj.object_name or "HEAD", relpath = rel },
+          { __index = obj })
+        return orig_blame(head_obj, contents, lnum, nil, blame_opts)
+      end
+
+      -- `CacheEntry:get_blame` tiene un atajo: una línea dentro de un hunk se
+      -- marca "Not Committed Yet" sin correr git blame, porque con base HEAD un
+      -- hunk ES un cambio sin commitear. Con una base de commit no lo es (todo lo
+      -- cambiado desde la base es hunk), así que en ese caso se corre el blame
+      -- real (contra HEAD, por el parche de arriba): git mismo marca como no
+      -- commiteado lo que de verdad no lo está.
+      local CacheEntry = require("gitsigns.cache").CacheEntry
+      if type(CacheEntry and CacheEntry.get_blame) ~= "function" then
+        vim.notify("gitsigns: CacheEntry.get_blame changed, blame-vs-HEAD patch incomplete (see docs/decisions.md D-20)",
+          vim.log.levels.WARN)
+        return
+      end
+      local orig_get_blame = CacheEntry.get_blame
+      CacheEntry.get_blame = function(self, lnum, blame_opts)
+        local rev = self.git_obj and self.git_obj.revision
+        if not rev or rev == "" or vim.startswith(rev, ":") or not lnum then
+          return orig_get_blame(self, lnum, blame_opts)
+        end
+        local first = type(lnum) == "table" and lnum[1] or lnum
+        local last = type(lnum) == "table" and lnum[2] or lnum
+        local blame = self.blame
+        local valid = blame ~= nil
+        for l = first, last do
+          if not valid then break end
+          valid = blame.entries[l] ~= nil
+        end
+        if not valid then
+          blame = blame or { entries = {} }
+          local b, commits, full = self:run_blame(lnum, blame_opts)
+          self.commits = vim.tbl_extend("force", self.commits or {}, commits)
+          if full then
+            blame.entries = b
+          else
+            for l = first, last do blame.entries[l] = b[l] end
+          end
+          self.blame = blame
+        end
+        return blame.entries[lnum]
+      end
     end,
   },
 }

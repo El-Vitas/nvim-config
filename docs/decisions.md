@@ -198,3 +198,18 @@ Lo que queda pendiente, con el motivo:
 - El cheatsheet lista los atajos LSP que trae Neovim 0.12 (`grn`, `grr`, `gri`, `grt`, `gra`, `gO`) y ya no tiene el respaldo para versiones sin `footer` en ventanas flotantes.
 - `buffers.lua` cierra con `:bdelete` y no con `nvim_buf_delete` (que es `:bwipeout`): la quickfix de cambios de review, las marcas y el jumplist siguen apuntando al archivo, y review-mode recibe el `BufDelete` con el que libera sus caches.
 
+## D-20 · El blame de gitsigns se calcula contra HEAD aunque haya base
+
+`lua/plugins/gitsigns.lua`.
+
+Reportado el 2026-10-28 en FastCase con la base `efe1a41`. `pagination.constants.ts` está commiteado en `191787f`, pero el blame de la línea decía "Not Committed Yet". Lo causan dos cosas de gitsigns `d4854fa`:
+
+1. Con una base explícita, `CacheEntry:run_blame` le pasa la base a `git blame`. Si el archivo no existe en la base, `run_blame` ni siquiera llama a git y marca todo como no commiteado (`lua/gitsigns/git/blame.lua:229`).
+2. `CacheEntry:get_blame` se salta el blame en las líneas que caen dentro de un hunk y las marca "Not Committed Yet" (`lua/gitsigns/cache.lua:231`). Con base HEAD es correcto, porque un hunk es un cambio sin commitear. Con una base de commit, todo lo cambiado desde la base es hunk, aunque esté commiteado.
+
+La base es para comparar (signos, vistas). El blame tiene que decir quién escribió la línea, y eso no depende de contra qué se compara. Por eso los dos parches actúan solo cuando la base es un commit. `run_blame` corre contra HEAD si el archivo existe en HEAD, y `get_blame` corre el blame real en vez del atajo. Lo que de verdad no está commiteado lo marca git mismo.
+
+- **Verificado:** en FastCase, la línea 3 de `pagination.constants.ts` muestra `191787f` y una línea editada sin guardar sigue mostrando "Not Committed Yet".
+- **Costo:** con base de commit, posar el cursor en una línea cambiada corre un `git blame -L` de esa línea, igual que en cualquier línea sin cambios.
+- **Si gitsigns cambia la API:** sin `run_blame` o `CacheEntry.get_blame`, la config avisa al arrancar.
+

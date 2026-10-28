@@ -117,8 +117,8 @@ local function file_is_open(path)
 end
 
 -- Vía ÚNICA para abrir/revelar/mostrar neo-tree respetando la base de review:
--- delega en review.neotree_exec (que inyecta git_base cuando el source es
--- git_status). Fallback a command.execute directo si review no está disponible.
+-- delega en review.neotree_exec (que inyecta git_base en los dos modos del
+-- árbol, cambios y archivos). Fallback a command.execute directo si review no está disponible.
 -- TODO open/reveal/toggle del árbol debe pasar por acá — así ninguno ignora la base.
 local function nt_exec(exec)
   local ok, review = pcall(require, "review")

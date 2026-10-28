@@ -93,6 +93,25 @@ rules:
         given: La vista split está activa y el foco está en la columna HEAD
         when: El usuario pasa a la vista normal
         then: Desaparecen las dos columnas del par y ninguna ventana queda en modo diff
+  - id: BR-c380654
+    status: active
+    title: Un archivo nuevo respecto de la base se marca igual en todas partes
+    rule: >-
+      Con una base de comparación elegida, un archivo que no existe en la base es nuevo aunque ya esté commiteado. El
+      árbol de archivos y el de cambios lo muestran con N, la vista inline lo pinta entero como agregado y la split lo
+      muestra en una columna. El blame de cada línea sigue diciendo el commit que la escribió; "Not Committed Yet" queda
+      solo para lo que de verdad no está commiteado. Un archivo ignorado por git no se marca.
+    why: >-
+      Reportado el 2026-10-28 en FastCase: gitsigns pintaba el archivo en verde, el árbol no le ponía letra, inline no
+      mostraba nada y el blame decía "Not Committed Yet" sobre líneas commiteadas.
+    context: >-
+      Detalle en review-mode/docs/decisions.md (B21) y docs/decisions.md (D-20). Verificado por tests/core/git_spec.lua
+      y tests/views/inline_spec.lua.
+    scenarios:
+      - title: Archivo creado después de la base
+        given: La base es un commit anterior a la creación de pagination.constants.ts, que ya está commiteado
+        when: El usuario abre el archivo con la vista inline y el árbol de archivos
+        then: Todas las líneas se ven en verde, el árbol lo marca con N y el blame muestra el commit que lo creó
   - id: BR-c517e19
     status: active
     title: Split se reduce a una columna cuando no hay nada que comparar
