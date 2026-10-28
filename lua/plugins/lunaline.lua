@@ -63,15 +63,11 @@ local function md_state()
   local buf = vim.api.nvim_get_current_buf()
 
   -- Preview dividido: vale tanto si estás parado en el panel del preview como en
-  -- el archivo fuente que lo abrió. Va PRIMERO porque al abrir el preview
-  -- render-markdown apaga el render del buffer fuente (lo dibuja en el otro
-  -- panel), y sin este chequeo el fuente diría "raw", que es engañoso.
-  local ok_p, preview = pcall(require, "render-markdown.core.preview")
-  if ok_p then
-    local en_preview = preview.get(buf) ~= nil
-    local tiene_preview = type(preview.buffers) == "table" and preview.buffers[buf] ~= nil
-    if en_preview or tiene_preview then return I.split .. " md split", c.blue end
-  end
+  -- el archivo fuente que lo abrió. Va PRIMERO porque el preview apaga el render
+  -- del fuente (lo dibuja en el otro panel), y sin este chequeo el fuente diría
+  -- "raw", que es engañoso.
+  local ok_p, preview = pcall(require, "config.mdpreview")
+  if ok_p and preview.active(buf) then return I.split .. " md split", c.blue end
 
   local ok_m, mgr = pcall(require, "render-markdown.core.manager")
   local ok_s, st = pcall(require, "render-markdown.state")

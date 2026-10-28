@@ -7,7 +7,8 @@ Config personal de Neovim 0.12 con lazy.nvim. `~/.config/nvim` es un symlink a e
 | Ruta | Qué hay |
 |---|---|
 | `init.lua` | Bootstrap de lazy, leader, módulos propios y `lazy.setup` |
-| `lua/config/` | Módulos propios: opciones, cheatsheet (`keymaps.lua`), límite de buffers, binarios (`open.lua`), estado de ocultos (`hidden.lua`), grilla de tablas markdown (`mdtable.lua`) |
+| `lua/config/` | Módulos propios: opciones, cheatsheet (`keymaps.lua`), límite de buffers, binarios (`open.lua`), estado de ocultos (`hidden.lua`), grilla de tablas markdown (`mdtable.lua`), preview de markdown (`mdpreview.lua`) |
+| `tests/` | Pruebas con el editor completo y las teclas reales (`tests/run.sh`) |
 | `lua/plugins/` | Un spec de lazy por plugin o grupo |
 | `lua/material_folders.lua` | Tabla generada por `../material-font`. No se edita a mano |
 | `docs/business-rules/` | Qué tiene que hacer el editor. Se consulta con el CLI |
@@ -37,7 +38,7 @@ Repos hermanos en `~/Dev/nvim`: `review-mode/` (plugin de revisión, cargado con
 
 ## Cómo verificar un cambio
 
-No hay suite de tests de la config. Lo mínimo:
+`tests/run.sh` prueba lo que tiene casos difíciles de ver a mano, como el preview de markdown. Corre en un repo temporal y no toca las sesiones. Si se cambia algo de lo que prueba, se corre. Además, lo mínimo para cualquier cambio:
 
 ```bash
 # arranca sin errores ni avisos

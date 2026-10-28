@@ -57,6 +57,28 @@ rules:
         given: La base tiene a, b, c, d y el archivo tiene a, b, c
         when: El usuario mira la vista inline
         then: La línea "d" aparece en rojo debajo de "c"
+  - id: BR-4ecefa6
+    status: active
+    title: La vista previa de markdown y el split de review no se combinan
+    rule: >-
+      La vista previa de markdown y la vista split de review ocupan las dos columnas, así que nunca están abiertas a la
+      vez. Gana la última que se pide. Pasar review a split (<leader>rs, o <leader>rv al llegar a split) desde
+      cualquiera de las dos columnas cierra la vista previa y arma el par. Abrir la vista previa con review en split
+      pasa review a la vista normal. La vista inline convive con la vista previa, porque se dibuja sobre el archivo
+      crudo.
+    why: >-
+      Reportado el 2026-10-28: con las dos abiertas quedaban tres columnas (base, archivo y vista previa) y cerrar una
+      dejaba la otra en un estado a medias.
+    context: Detalle en docs/decisions.md (D-22). Verificado por tests/mdpreview.lua (M13-M18).
+    scenarios:
+      - title: Split de review con la vista previa abierta
+        given: La vista previa de doc.md está abierta, con cambios contra la base
+        when: El usuario aprieta <leader>rs
+        then: La vista previa se cierra y queda el par base y archivo, en dos columnas
+      - title: Vista previa con el split de review
+        given: Review está en split sobre doc.md
+        when: El usuario aprieta <leader>M
+        then: Review pasa a la vista normal y queda el archivo crudo con su vista previa
   - id: BR-9503d46
     status: active
     title: Cerrar o cambiar columnas del split nunca cierra Neovim

@@ -3,14 +3,59 @@ name: Markdown
 purpose: Cómo se ven y se editan los archivos markdown.
 scope: markdown
 rules:
-  - id: BR-f507ed6
+  - id: BR-a206ba0
     status: active
+    title: La vista previa muestra crudo y renderizado lado a lado, y se mueven juntos
+    rule: >-
+      <leader>M abre a la derecha del archivo markdown una columna con el documento renderizado, y el archivo queda
+      crudo a la izquierda. Las dos columnas muestran siempre la misma línea arriba y la misma línea de cursor, se
+      desplace o se mueva el cursor en la que sea. Lo que se edita en el archivo aparece en la vista previa, con las
+      tablas como grilla y el código con colores. Si la ventana del archivo pasa a mostrar otro markdown, la vista
+      previa pasa a mostrar ese; si pasa a mostrar otro tipo de archivo, se cierra. <leader>M la cierra desde cualquiera
+      de las dos columnas, cerrar cualquiera de las dos la cierra, y al cerrarla el archivo vuelve a verse como estaba
+      antes (renderizado o crudo). En la columna de la vista previa no se abren archivos. Hay una sola vista previa a la
+      vez.
+    why: >-
+      Reportado el 2026-10-28: las columnas no se movían juntas, cambiar de archivo dejaba una vista previa del archivo
+      anterior, y junto con el split de review quedaban tres columnas.
+    context: Detalle en docs/decisions.md (D-22). Verificado por tests/mdpreview.lua (tests/run.sh).
+    scenarios:
+      - title: Desplazarse en la vista previa
+        given: La vista previa está abierta y el foco está en ella
+        when: El usuario baja con <C-e> o salta a una línea
+        then: El archivo crudo muestra la misma línea arriba y el cursor en la misma línea
+      - title: Cerrar la vista previa desde ella
+        given: La vista previa está abierta y el foco está en ella
+        when: El usuario aprieta <leader>M
+        then: La vista previa se cierra y el archivo vuelve a verse renderizado
+      - title: Abrir otro archivo
+        given: La vista previa de doc.md está abierta
+        when: El usuario abre code.lua en la ventana de doc.md
+        then: La vista previa se cierra y queda una sola columna
+  - id: BR-b9d413a
+    status: active
+    title: Markdown se ve renderizado y se edita crudo
+    rule: >-
+      En modo normal y visual un archivo markdown se ve renderizado (títulos, código, listas, tablas como grilla); en
+      modo insert se ve el texto crudo, y la línea del cursor siempre se ve cruda. <leader>m alterna renderizado y
+      crudo.
+    why: Leer renderizado y editar viendo los caracteres reales evita adivinar dónde termina un enlace o una tabla.
+    context: La vista previa en dos columnas (<leader>M) tiene su propia regla.
+    supersedes: BR-f507ed6
+    scenarios:
+      - title: Tabla larga
+        given: Una tabla cuyas celdas no entran en el ancho de la ventana
+        when: El usuario la mira en modo normal
+        then: Las celdas se parten dentro de su columna y los bordes quedan alineados en todas las líneas
+  - id: BR-f507ed6
+    status: superseded
     title: Markdown se ve renderizado y se edita crudo
     rule: >-
       En modo normal y visual un archivo markdown se ve renderizado (títulos, código, listas, tablas como grilla); en
       modo insert se ve el texto crudo, y la línea del cursor siempre se ve cruda. <leader>m alterna renderizado y
       crudo; <leader>M abre o cierra una vista previa en split desde cualquiera de los dos paneles.
     why: Leer renderizado y editar viendo los caracteres reales evita adivinar dónde termina un enlace o una tabla.
+    superseded_by: BR-b9d413a
     scenarios:
       - title: Tabla larga
         given: Una tabla cuyas celdas no entran en el ancho de la ventana

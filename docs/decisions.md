@@ -127,7 +127,7 @@ Se actualizaron 15 plugins. Antes de dar por buena la actualización se revisó 
 
 - **gitsigns:** `Repo:file_info(file, revision)` y `object_missing` (parche de renombrados).
 - **neo-tree:** `git.status`, `worktrees[...].status_diff`, `before_git_status`, `fs._navigate_internal`, `renderer.get_expanded_nodes`, `force_open_folders`.
-- **render-markdown:** `core.preview.get` y `.buffers`, `core.manager.attached`, `state.get`.
+- **render-markdown:** `core.preview.get` y `.buffers`, `core.manager.attached`, `state.get`. Desde D-22 el preview es propio y solo queda `state.get`.
 
 nvim-scrollbar avisaba en cada arranque que el 2026-11-16 su `main` pasa a v2, que rechaza las opciones de v1 y la API de handlers que usa review-mode para sus marcas. Se fijó `branch = "v1"`, que apunta al mismo commit que había antes de actualizar. Migrar a v2 queda pendiente ([issue #121](https://github.com/petertriho/nvim-scrollbar/issues/121)).
 
@@ -237,4 +237,25 @@ Reportado el 2026-10-28: "al cambiar entre archivos a veces demora mucho". Se mi
 Queda un caso sin cubrir. Si en el primer segundo y medio después de arrancar se abre un tipo de archivo que todavía no tiene su consulta compilada, se paga la compilación como antes. Arrancar Neovim abriendo un archivo no está en ese caso, porque el arranque ya incluye su consulta.
 
 Se descartó compilar todo en el arranque: suma ~530 ms bloqueados antes de la primera pantalla. Neovim tampoco guarda en disco las consultas compiladas, así que no hay forma de evitar compilarlas una vez por sesión.
+
+## D-22 · Preview de markdown propio
+
+`lua/config/mdpreview.lua`, enganchado a `<leader>M` en `lua/plugins/markdown.lua`. Prueba: `tests/mdpreview.lua`, que se corre con `tests/run.sh`.
+
+Reportado el 2026-10-28: las dos columnas del preview no se movían juntas, y había que revisar qué pasaba al combinarlo con las vistas de review. La reproducción con el preview de render-markdown (`core/preview.lua`, commit `8e87953`) mostró cuatro fallas:
+
+1. Solo copia el cursor del fuente al preview, en `CursorMoved`. `<C-e>` dejaba el fuente en la línea 6 y el preview en la 1, y moverse en el preview no movía el fuente.
+2. Fija la ventana fuente al abrir y engancha los eventos al buffer. Al abrir otro archivo en esa ventana, el preview seguía mostrando el anterior.
+3. No sabe nada de review. `<leader>rs` con el preview abierto dejaba tres columnas (base, archivo y preview), y `<leader>M` con el split de review, también.
+4. La grilla de tablas (`config.mdtable`) se engancha a archivos `*.md`, y el buffer del preview no tiene nombre, así que las tablas salían crudas. El autocmd de treesitter de la config solo arranca en buffers de archivo, así que los bloques de código salían sin colores.
+
+Arreglar eso desde afuera exigía parchear varias funciones privadas de render-markdown, así que el preview pasó a ser propio. Sigue la misma idea que mdtable, que ya reemplaza al renderer de tablas. De render-markdown solo se usa la API pública `set_buf`, más `state.get` para leer si un buffer se ve crudo.
+
+- **Desplazamiento:** cada panel lleva al otro a su misma línea de arriba y de cursor con `winrestview`. `WinScrolled` cubre `<C-e>`, `<C-d>`, la rueda y los saltos. `CursorMoved` cubre lo que no desplaza. Qué panel se movió sale de `v:event` y no del foco, porque la rueda desplaza la ventana que está bajo el mouse. Una bandera corta el rebote.
+- **Se descartó `scrollbind`.** El modo diff de review también lo usa, y tres ventanas con `scrollbind` se arrastran entre sí. Además es una opción de ventana que se guarda por buffer, el mismo problema que el diff pegado de review-mode B20.
+- **Contenido:** `TextChanged` y `TextChangedI` del fuente copian las líneas al panel y le disparan `TextChanged` para que render-markdown redibuje. La grilla del panel se dibuja con `mdtable.render` y treesitter se arranca a mano.
+- **Ciclo de vida:** el panel tiene `winfixbuf`, igual que la columna base del split de review, y se cierra sin `DiffUpdated` por el SIGSEGV de review-mode B19. Si el fuente se cierra y el panel queda solo en su pestaña, se aplica el mismo criterio que el autocierre de neo-tree. Al cerrar, el fuente recupera el modo (md o raw) que tenía.
+- **Con review:** el preview escucha `view:changed` y se cierra cuando review pasa a split. Abrir el preview con review en split pasa review a normal. La vista inline convive con el preview, porque se dibuja sobre el archivo crudo.
+
+**Verificado:** `tests/run.sh` corre 29 verificaciones con las teclas reales, tres veces seguidas sin fallas. Con una expectativa cambiada a propósito, el script reporta la falla y sale con código 1.
 

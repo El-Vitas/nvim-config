@@ -6,10 +6,9 @@
 -- Dos teclas:
 --   <leader>m  alterna renderizado (`md`) y markdown crudo (`raw`) en este buffer.
 --              El buffer siempre se puede editar.
---   <leader>M  PREVIEW en split. Es toggle y funciona desde CUALQUIERA de los dos
---              paneles (ver preview_toggle abajo: el toggle nativo solo cierra
---              desde el buffer fuente, y si tenías el foco en el preview quedabas
---              sin forma de volver a una sola columna).
+--   <leader>M  PREVIEW en dos columnas, crudo y renderizado, que se desplazan
+--              juntas. Abre y cierra desde cualquiera de los dos paneles. Lo
+--              maneja `config.mdpreview`.
 --
 -- Fuera de esos modos el intercambio es automático: en normal ves renderizado,
 -- en insert ves el markdown crudo (`render_modes`), y la línea del cursor siempre
@@ -106,26 +105,10 @@ local function md_toggle()
   require("config.mdtable").refresh()
 end
 
--- ── PREVIEW en split: toggle desde AMBOS lados ────────────────────────────────
--- `preview.open()` ya es toggle, pero solo cierra si lo llamas desde el buffer
--- FUENTE: chequea `manager.attached(buf)` y sale temprano en cualquier otro. Si
--- movías el foco al panel del preview, no había forma de volver a una columna.
--- `preview.get(buf)` devuelve el buffer fuente de un preview → con eso resolvemos
--- el cierre desde el lado que sea.
+-- ── PREVIEW en dos columnas ───────────────────────────────────────────────────
+-- Propio y no el de render-markdown: ver config/mdpreview.lua y D-22.
 local function preview_toggle()
-  local ok, preview = pcall(require, "render-markdown.core.preview")
-  if not ok then
-    vim.cmd("RenderMarkdown preview") -- fallback si cambia el interno
-    return
-  end
-  local buf = vim.api.nvim_get_current_buf()
-  if preview.get(buf) then
-    -- Estamos DENTRO del preview: borrarlo. Su autocmd BufWipeout restaura el
-    -- render del buffer fuente, así que no hay que limpiar nada más a mano.
-    pcall(vim.api.nvim_buf_delete, buf, {})
-    return
-  end
-  preview.open(buf) -- desde el fuente: abre, o cierra si ya estaba
+  require("config.mdpreview").toggle()
 end
 
 return {
