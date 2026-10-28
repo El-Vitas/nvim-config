@@ -11,8 +11,10 @@ return {
     })
   end,
   keys = {
-    { "<leader>ff", "<cmd>Telescope find_files<cr>", desc = "Find Files" },
-    { "<leader>fg", "<cmd>Telescope live_grep<cr>", desc = "Live Grep" },
+    -- Pasan por config.hidden para leer el MISMO estado que `H` en Neo-tree.
+    -- Llamar a `Telescope find_files` pelado dejaría los dos desincronizados.
+    { "<leader>ff", function() require("config.hidden").find_files() end, desc = "Find Files" },
+    { "<leader>fg", function() require("config.hidden").live_grep() end, desc = "Live Grep" },
     -- NUEVO: Ver errores/advertencias del LSP en todo el proyecto
     { "<leader>fd", "<cmd>Telescope diagnostics<cr>", desc = "LSP Diagnostics (Project)" },
     -- OPCIONAL: Ver errores solo del archivo actual

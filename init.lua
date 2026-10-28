@@ -19,6 +19,13 @@ vim.opt.guifont = "CaskaydiaCove Nerd Font:h12"
 -- (o un directorio) muestra el listado feo de netrw.
 vim.g.loaded_netrw = 1
 vim.g.loaded_netrwPlugin = 1
+-- Los plugins nativos zip/tar registran su propio BufReadCmd para .zip/.docx/
+-- .tar.gz y compiten con config.open (que manda esos formatos al visor del
+-- sistema). Sin esto salta "(zip#Browse) ... is not a zip file" al abrirlos.
+vim.g.loaded_zipPlugin = 1
+vim.g.loaded_zip = 1
+vim.g.loaded_tarPlugin = 1
+vim.g.loaded_tar = 1
 -- Critical Session Settings
 vim.opt.sessionoptions = "buffers,curdir,tabpages,winsize,help,globals,terminal,localoptions"
 
@@ -29,6 +36,8 @@ vim.g.maplocalleader = "\\"
 -- Keymaps propios (después del leader, si no `<leader>?` quedaría con el leader viejo).
 require("config.keymaps")
 require("config.buffers") -- límite de buffers abiertos (cola de 5)
+require("config.open").setup() -- imágenes / PDF: visor del sistema + preview
+require("config.hidden").setup() -- estado único de "ocultos" (árbol + telescope)
 
 -- Setup lazy.nvim
 require("lazy").setup({
