@@ -3,6 +3,7 @@ local c = {
   purple = "#c6a0f6",
   gold   = "#eed49f",
   green  = "#9ece6a", -- verde potente
+  blue   = "#8aadf4", -- indicador "md split"
   fg     = "#cad3f5",
   mid    = "#363a4f",
   dark   = "#181926",
@@ -39,8 +40,8 @@ local dim = "#6b7089"
 -- ── Iconos ────────────────────────────────────────────────────────────────────
 -- Elegidos POR NOMBRE en `glyphnames.json` de nerd-fonts, no por codepoint a
 -- ojo: así se eligió una vez un `md-content_cut` (tijeras) como icono de "off".
--- Cada uno lleva su nombre al lado; para cambiarlos, buscá el nombre en
--- https://www.nerdfonts.com/cheat-sheet y reemplazá el par (glifo, comentario).
+-- Cada uno lleva su nombre al lado; para cambiarlos, busca el nombre en
+-- https://www.nerdfonts.com/cheat-sheet y reemplaza el par (glifo, comentario).
 -- Verificados presentes en CaskaydiaCove Nerd Font con:
 --   fc-list ":charset=<codepoint>" family | grep -i caskaydia
 local I = {

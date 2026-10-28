@@ -13,7 +13,7 @@
 -- Abrir delega en `vim.ui.open()`, stdlib de Neovim: él resuelve el handler del
 -- sistema operativo (macOS `open`, Linux `xdg-open`, WSL `wslview` /
 -- `explorer.exe`, Windows `cmd /c start`, remoto `lemonade`) y respeta el
--- programa que tengas asociado a ese mime. Si cambiás de distro, de escritorio
+-- programa que tengas asociado a ese mime. Si cambias de distro, de escritorio
 -- o de SO, esto sigue andando sin tocar una línea.
 --
 -- Overrideable sin editar este archivo:
@@ -106,7 +106,8 @@ local function fill(buf, path)
   local ok, err = pcall(sin_undo, buf, function()
     vim.api.nvim_buf_set_lines(buf, 0, -1, false, {})
     vim.api.nvim_buf_call(buf, function()
-      vim.cmd(("silent keepalt noautocmd 0read %s"):format(vim.fn.fnameescape(path)))
+      local bin = vim.bo[buf].binary and "++bin " or ""
+      vim.cmd(("silent keepalt noautocmd 0read %s%s"):format(bin, vim.fn.fnameescape(path)))
       -- `0read` inserta ANTES de la línea 1 → la vacía original queda al final.
       local last = vim.api.nvim_buf_line_count(buf)
       if last > 1 and vim.api.nvim_buf_get_lines(buf, last - 1, last, false)[1] == "" then
@@ -125,6 +126,9 @@ local function read_raw(buf, path)
   vim.bo[buf].buftype = ""
   vim.bo[buf].bufhidden = ""
   vim.bo[buf].swapfile = false -- binario: el swap no aporta y molesta
+  -- La lectura la hace este BufReadCmd y no Vim, así que Vim no activa
+  -- 'binary' aunque se haya pedido `++bin`: se activa acá, ANTES de leer.
+  vim.bo[buf].binary = true
   fill(buf, path)
 end
 
@@ -180,7 +184,7 @@ end
 
 -- ── Interceptar la apertura de binarios ───────────────────────────────────────
 
--- Texto guía cuando cancelás el prompt: la ventana nunca queda en un callejón.
+-- Texto guía cuando cancelas el prompt: la ventana nunca queda en un callejón.
 local function placeholder(buf, path)
   local size = vim.fn.getfsize(path)
   local human = size < 0 and "?" or (size > 1048576
@@ -215,8 +219,10 @@ end
 
 local function handle(buf, path)
   -- Bypass explícito: `:edit! ++bin` ya pidió los bytes crudos. Sin esto,
-  -- volvería a caer acá y `M.raw` entraría en bucle.
-  if vim.bo[buf].binary then
+  -- volvería a caer acá y `M.raw` entraría en bucle. Dentro de BufReadCmd el
+  -- `++bin` llega en `v:cmdarg`; la opción 'binary' recién se activa después,
+  -- así que para un archivo que no estaba abierto solo `v:cmdarg` lo dice.
+  if vim.bo[buf].binary or vim.v.cmdarg:find("++bin", 1, true) then
     read_raw(buf, path)
     return
   end
@@ -254,7 +260,11 @@ function M.setup()
   -- sería exactamente el acoplamiento que queremos evitar.
 
   local pats = {}
-  for e in pairs(BINARY) do pats[#pats + 1] = "*." .. e end
+  -- Los patrones distinguen mayúsculas en Linux: `FOTO.PNG` también es binario.
+  for e in pairs(BINARY) do
+    pats[#pats + 1] = "*." .. e
+    pats[#pats + 1] = "*." .. e:upper()
+  end
 
   vim.api.nvim_create_autocmd("BufReadCmd", {
     group = vim.api.nvim_create_augroup("OpenBinaryDocs", { clear = true }),
@@ -268,7 +278,9 @@ function M.setup()
         notify("falling back to raw read: " .. tostring(err), vim.log.levels.WARN)
         pcall(fill, a.buf, vim.fn.fnamemodify(a.file, ":p"))
       end
-      return true -- nos hacemos cargo de llenar el buffer
+      -- Sin `return true`: en un callback Lua un valor verdadero BORRA el
+      -- autocmd (`:h nvim_create_autocmd`), y el segundo binario de la sesión se
+      -- abría como texto editable que un :w corrompía.
     end,
   })
 end

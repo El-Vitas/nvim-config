@@ -39,7 +39,7 @@ return {
       -- Archivo ACTUAL: fondo morado a nivel de línea (bg-only → conserva el color
       -- del texto: los amarillos de git se mantienen). Mismo morado que la cursorline.
       set(0, "NeoTreeCurrentFileBg", { bg = "#2c2740" })
-      -- VIOLETA = cursor al navegar dentro del árbol (se mueve con vos).
+      -- VIOLETA = cursor al navegar dentro del árbol (se mueve contigo).
       set(0, "NeoTreeCursorLine", { bg = "#2c2740" })
       -- Grises que eran casi invisibles (#333539) → legibles (fix `->` del help).
       set(0, "NeoTreeDimText", { fg = "#7a8296" })
@@ -86,6 +86,7 @@ return {
     end
     vim.schedule(neotree_hl) -- tras cargar neo-tree
     vim.api.nvim_create_autocmd("ColorScheme", {
+      group = vim.api.nvim_create_augroup("UserThemeHighlights", { clear = true }),
       callback = function() vim.schedule(neotree_hl) end,
     })
   end,

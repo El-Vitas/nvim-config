@@ -354,11 +354,16 @@ function M.render(buf, win)
   M.clear(buf, win)
   if vim.bo[buf].filetype ~= "markdown" then return end
 
+  -- Sin tablas no hay grilla, y el wrap del usuario (<leader>w) queda como está.
+  local nodes = tables_in(buf)
+  if #nodes == 0 then return end
+
   -- Para que el conceal de rango haga efecto hace falta conceallevel >= 2. Y
   -- sin `concealcursor`, la línea donde está el cursor se vuelve a dibujar: el
   -- markdown crudo reaparecería EN MEDIO de la grilla y la partiría. Con "nc"
   -- se mantiene oculta en normal y command; en insert limpiamos todo igual, así
-  -- que ahí seguís viendo (y editando) los pipes reales.
+  -- que ahí sigues viendo (y editando) los pipes reales. La grilla se dibuja
+  -- desde la columna 0 de la ventana, así que con tablas el wrap se apaga.
   pcall(function()
     if vim.wo[win].conceallevel < 2 then vim.wo[win][0].conceallevel = 2 end
     vim.wo[win][0].concealcursor = "nc"
@@ -367,7 +372,7 @@ function M.render(buf, win)
   end)
 
   local avail = width_for(win)
-  for _, node in ipairs(tables_in(buf)) do
+  for _, node in ipairs(nodes) do
     local t = parse(buf, node)
     if t then
       local ncols = #t.header.cells
@@ -401,13 +406,22 @@ end
 -- Debounce: BufEnter/TextChanged/resize llegan en ráfagas y cada re-render borra
 -- y reconstruye TODOS los extmarks de la tabla. Sin coalescer, esa ráfaga se ve
 -- como parpadeo. 60 ms alcanza para agrupar sin que se sienta lento.
-local timer
+-- UN solo temporizador reutilizado: con `vim.defer_fn` + `stop()` quedaría un
+-- handle abierto por cada ráfaga (docs/decisions.md, D-13).
+local timer = assert(vim.uv.new_timer())
+
+--- ¿render-markdown está en modo crudo (`<leader>m`) para este buffer?
+local function raw_mode(buf)
+  local ok, enabled = pcall(function() return require("render-markdown.state").get(buf).enabled end)
+  return ok and enabled == false
+end
+
 local function refresh_now()
   local buf = vim.api.nvim_get_current_buf()
   if vim.bo[buf].filetype ~= "markdown" then return end
-  -- En insert mostramos el markdown crudo, igual que render-markdown, para poder
-  -- editar la tabla viendo los pipes reales.
-  if vim.fn.mode():sub(1, 1) == "i" then
+  -- En insert y en modo crudo se ve el markdown real, igual que render-markdown,
+  -- para poder editar la tabla viendo los pipes.
+  if vim.fn.mode():sub(1, 1) == "i" or raw_mode(buf) then
     M.clear(buf)
   else
     M.render(buf, vim.api.nvim_get_current_win())
@@ -415,12 +429,12 @@ local function refresh_now()
 end
 
 local function refresh()
-  if timer then timer:stop() end
-  timer = vim.defer_fn(function()
-    timer = nil
-    pcall(refresh_now)
-  end, 60)
+  timer:stop()
+  timer:start(60, 0, vim.schedule_wrap(function() pcall(refresh_now) end))
 end
+--- Redibuja la grilla del buffer actual (o la quita en modo crudo). Para quien
+--- cambia un estado que no dispara eventos, como el toggle md ↔ raw.
+M.refresh = refresh
 
 function M.setup()
   local group = vim.api.nvim_create_augroup("MdTableGrid", { clear = true })

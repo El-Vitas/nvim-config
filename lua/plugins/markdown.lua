@@ -3,10 +3,9 @@
 -- Misma filosofía que review-mode: todo son decoraciones (extmarks) sobre el
 -- archivo verdadero — no hay buffer espejo ni tab nueva.
 --
--- Dos modos, dos teclas:
---   <leader>m  READING MODE — render forzado + buffer de SOLO LECTURA. Es un modo
---              de lectura de verdad: no se puede escribir, así que el render no
---              se rompe mientras lo mirás. Volver a apretar devuelve la edición.
+-- Dos teclas:
+--   <leader>m  alterna renderizado (`md`) y markdown crudo (`raw`) en este buffer.
+--              El buffer siempre se puede editar.
 --   <leader>M  PREVIEW en split. Es toggle y funciona desde CUALQUIERA de los dos
 --              paneles (ver preview_toggle abajo: el toggle nativo solo cierra
 --              desde el buffer fuente, y si tenías el foco en el preview quedabas
@@ -101,25 +100,25 @@ local function set_highlights()
 end
 
 -- ── Tablas: renderer propio ───────────────────────────────────────────────────
--- El renderer de tablas de render-markdown dibuja UNA línea de pantalla por línea
--- de buffer, así que una fila que no entra se descuartiza (bordes en columnas
--- distintas) y no puede haber separador entre filas. Lo apagamos abajo
--- (`pipe_table.enabled = false`) y lo reemplazamos por `config.mdtable`, que
--- maqueta por CELDA con virt_lines: columnas de ancho fijo, wrap dentro de la
--- celda, bordes rectos en todas las líneas y separador entre filas.
---
--- Como esa grilla se calcula para ENTRAR en la ventana, ya no hace falta apagar
--- el wrap en markdown: tu preferencia de <leader>w se respeta.
+-- `config.mdtable` reemplaza al renderer de tablas de render-markdown
+-- (`pipe_table.enabled = false`, abajo). Maqueta por CELDA con virt_lines:
+-- columnas de ancho fijo que entran en la ventana, wrap dentro de la celda,
+-- bordes rectos en todas las líneas y un separador entre filas. Desde la 8.14,
+-- render-markdown también parte celdas (`pipe_table.wrap`), pero no dibuja el
+-- separador entre filas, que es lo que justifica mantener el renderer propio.
+-- En un archivo con tablas la grilla apaga el wrap de la ventana; sin tablas,
+-- tu preferencia de <leader>w queda como está.
 
 -- ── md ↔ raw ──────────────────────────────────────────────────────────────────
--- Dos estados y nada más: renderizado (`md`) o markdown crudo (`raw`).
--- No hay modo solo-lectura: el buffer siempre se puede editar.
 local function md_toggle()
   vim.cmd("RenderMarkdown buf_toggle")
+  -- La grilla de tablas es propia (config.mdtable) y también tiene que
+  -- apagarse o volver: el toggle no dispara ningún evento que la refresque.
+  require("config.mdtable").refresh()
 end
 
 -- ── PREVIEW en split: toggle desde AMBOS lados ────────────────────────────────
--- `preview.open()` ya es toggle, pero solo cierra si lo llamás desde el buffer
+-- `preview.open()` ya es toggle, pero solo cierra si lo llamas desde el buffer
 -- FUENTE: chequea `manager.attached(buf)` y sale temprano en cualquier otro. Si
 -- movías el foco al panel del preview, no había forma de volver a una columna.
 -- `preview.get(buf)` devuelve el buffer fuente de un preview → con eso resolvemos
@@ -157,7 +156,7 @@ return {
       -- Incluye los modos VISUALES ("v" charwise, "V" linewise, "\22" bloque).
       -- Sin ellos, seleccionar varias líneas apagaba el render de golpe y todo
       -- el documento saltaba a markdown crudo mientras seleccionabas. Solo
-      -- insert queda fuera: ahí sí querés ver los caracteres reales que editás.
+      -- insert queda fuera: ahí sí quieres ver los caracteres reales que editas.
       render_modes = { "n", "c", "t", "v", "V", "\22" },
       anti_conceal = { enabled = true },
 
@@ -197,9 +196,7 @@ return {
         inline_pad = 1,
       },
 
-      -- Tablas: las dibuja `config.mdtable` (grilla por celda). Ver el comentario
-      -- de arriba: el renderer nativo no puede partir una celda en varias líneas
-      -- ni meter separadores entre filas.
+      -- Tablas: las dibuja `config.mdtable` (ver "Tablas: renderer propio").
       pipe_table = { enabled = false },
 
       bullet = { icons = { "●", "○", "◆", "◇" }, right_pad = 1 },

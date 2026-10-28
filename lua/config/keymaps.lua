@@ -125,7 +125,7 @@ local PANELS = {
 }
 
 -- Colores: mismos tokens que lualine/neo-tree para que se sienta parte del tema.
--- `default = true` → si vos definís el grupo, el tuyo gana. Se re-aplican en cada
+-- `default = true` → si tú defines el grupo, el tuyo gana. Se re-aplican en cada
 -- apertura porque un cambio de colorscheme limpia los grupos.
 local function set_highlights()
   local hl = {

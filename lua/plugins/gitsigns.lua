@@ -21,35 +21,17 @@ return {
     config = function(_, opts)
       require("gitsigns").setup(opts)
 
-      -- PARCHE: renames vs una base explícita (`change_base <commit>`).
-      --
-      -- Upstream (gitsigns 5be654f, "fix(change_base): handle files missing from
-      -- revision") ya resuelve solo el caso general: un archivo tracked que no
-      -- existe en la base se adjunta igual, con `object_missing = true`, y
-      -- `get_show_text` entrega base vacía → todo verde. Eso ANTES lo suplía un
-      -- parche nuestro mucho más grande; ya no hace falta y se eliminó.
-      --
-      -- Lo que a upstream SÍ se le escapa son los RENOMBRADOS. `ls_tree` busca el
-      -- rename así:
-      --     self:diff_rename_status(revision, true)[path]
-      -- pero ese mapa tiene claves RELATIVAS al repo ("src/ren_new.ts") y `path`
-      -- llega ABSOLUTO (gitsigns construye el Obj con el nombre del buffer) → la
-      -- búsqueda nunca matchea. Verificado a mano:
-      --     file_info(ABS) → object_missing=true          (rename NO resuelto)
-      --     file_info(REL) → object_name=<blob del viejo> (rename resuelto)
-      -- Resultado del bug: un archivo renombrado se pinta ENTERO como agregado,
-      -- en vez de mostrar solo los cambios reales.
-      --
-      -- Fix quirúrgico: solo cuando upstream marcó `object_missing`, miramos si el
-      -- archivo es el DESTINO de un rename vs la base y, si lo es, devolvemos el
-      -- blob del path VIEJO. Todo lo demás queda en manos de upstream.
-      -- Si algún día arreglan el path relativo, esto deja de dispararse solo
-      -- (porque ya no vendrá `object_missing`) y se puede borrar sin más.
-      pcall(function()
-        local Repo = require("gitsigns.git.repo")
-        if not (Repo and type(Repo.file_info) == "function" and not Repo.__review_patched) then
-          return
-        end
+      -- PARCHE: un archivo RENOMBRADO vs una base explícita (`change_base
+      -- <commit>`) se pintaba entero como agregado. Solo actúa cuando gitsigns
+      -- marcó `object_missing`: si el archivo es el destino de un rename, entrega
+      -- el blob del path viejo. Por qué y cuándo borrarlo: docs/decisions.md (D-16).
+      local Repo = require("gitsigns.git.repo")
+      if type(Repo.file_info) ~= "function" then
+        vim.notify("gitsigns: Repo.file_info changed, rename patch not applied (see docs/decisions.md D-16)",
+          vim.log.levels.WARN)
+        return
+      end
+      do
         local orig = Repo.file_info
         Repo.file_info = function(self, file, revision)
           local info, err = orig(self, file, revision)
@@ -78,8 +60,7 @@ return {
             mode_bits = info.mode_bits or "100644",
           }
         end
-        Repo.__review_patched = true
-      end)
+      end
     end,
   },
 }
