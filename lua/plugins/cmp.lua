@@ -1,25 +1,34 @@
 return {
   {
     "hrsh7th/nvim-cmp",
+    -- El autocompletado solo hace falta al escribir: no se carga en el arranque.
+    event = "InsertEnter",
     dependencies = {
       "hrsh7th/cmp-nvim-lsp",
-      "L3MON4D3/LuaSnip",
-      "saadparwaiz1/cmp_luasnip",
       "onsails/lspkind.nvim",
     },
     config = function()
       local cmp = require("cmp")
       local lspkind = require("lspkind")
+      local kinds = require("cmp.types").lsp.CompletionItemKind
+
+      -- Quita espacios al inicio y al final del texto de cada entrada.
+      local function trim(s)
+        return s:match("^%s*(.-)%s*$")
+      end
 
       cmp.setup({
+        -- Snippets del LSP con el motor NATIVO de Neovim (`vim.snippet`). Antes
+        -- se usaba LuaSnip, pero no había ningún snippet propio cargado: solo
+        -- expandía los del LSP, que es justo lo que `vim.snippet` ya hace.
         snippet = {
-          expand = function(args) require("luasnip").lsp_expand(args.body) end,
+          expand = function(args) vim.snippet.expand(args.body) end,
         },
         
         window = {
           completion = {
             border = "rounded",
-            scrollbar = "║",
+            scrollbar = true,
             -- 1. ALTURA LIMITADA A 12 OPCIONES
             max_height = 12, 
             winhighlight = "Normal:NormalFloat,FloatBorder:FloatBorder,CursorLine:PmenuSel,Search:None",
@@ -32,13 +41,6 @@ return {
             max_height = 15,
             max_width = 50,
           },
-        },
-
-        matching = {
-          disallow_fuzzy_matching = false,
-          disallow_fulltext_matching = false,
-          disallow_partial_fuzzy_matching = true,
-          disallow_partial_matching = false,
         },
 
         mapping = cmp.mapping.preset.insert({
@@ -55,10 +57,9 @@ return {
             name = "nvim_lsp",
             priority = 1000,
             entry_filter = function(entry, ctx)
-              return require('cmp.types').lsp.CompletionItemKind[entry:get_kind()] ~= 'Text'
+              return kinds[entry:get_kind()] ~= "Text"
             end
           },
-          { name = "luasnip", priority = 750 },
         }),
 
         -- 2. FORMATO COMPACTO (Letras "más pequeñas" visualmente)
@@ -72,11 +73,10 @@ return {
               -- Reducimos el nombre de la fuente a algo mínimo
               vim_item.menu = ({
                 nvim_lsp = "LSP",
-                luasnip = "SNP",
               })[entry.source.name]
               
               -- Limpieza de espacios extras en el nombre
-              vim_item.abbr = string.trim(vim_item.abbr)
+              vim_item.abbr = trim(vim_item.abbr)
               
               return vim_item
             end
@@ -87,11 +87,6 @@ return {
           entries = { name = 'custom', selection_order = 'near_cursor' }
         },
       })
-      
-      -- Helper function para limpiar espacios
-      function string.trim(s)
-        return s:match("^%s*(.-)%s*$")
-      end
     end,
   },
 }

@@ -5,41 +5,37 @@ return {
     lazy = false,
     build = ":TSUpdate",
     config = function()
-      -- Usamos pcall para evitar que el error detenga el inicio de Neovim
-      local status, configs = pcall(require, "nvim-treesitter.configs")
-      if status then
-        configs.setup({
-          -- Lenguajes para desarrollo Web y React
-          ensure_installed = { 
-            "lua", "vim", "vimdoc", "python", "javascript", 
-            "typescript", "tsx", "bash", "markdown", "html", "css" 
-          },
-          highlight = { 
-            enable = true,
-            additional_vim_regex_highlighting = false,
-          },
-          indent = { enable = true },
-        })
-      end
+      -- Parsers que deben estar instalados (desarrollo web y React).
+      --
+      -- Esta es la rama `main` de nvim-treesitter: ya no existe el módulo
+      -- `nvim-treesitter.configs` ni `ensure_installed`. El bloque viejo que lo
+      -- usaba fallaba en silencio (pcall) y por eso nunca se instalaron html ni
+      -- css. Ahora se instala solo lo que falta (async, sin bloquear); con todo
+      -- instalado no se lanza nada. El resaltado lo arranca el autocmd de abajo.
+      local ensure = {
+        "lua", "vim", "vimdoc", "python", "javascript",
+        "typescript", "tsx", "bash", "markdown", "markdown_inline", "html", "css",
+      }
+      local ts = require("nvim-treesitter")
+      local installed = ts.get_installed()
+      local missing = vim.tbl_filter(function(lang)
+        return not vim.list_contains(installed, lang)
+      end, ensure)
+      if #missing > 0 then ts.install(missing) end
 
       -- Autocomando para arrancar Treesitter de forma nativa en Neovim 0.12
       vim.api.nvim_create_autocmd("FileType", {
+        group = vim.api.nvim_create_augroup("UserTreesitterStart", { clear = true }),
         callback = function(args)
-          local ft = vim.bo[args.buf].filetype
-          local bt = vim.bo[args.buf].buftype
-          
-          -- Filetypes donde NO arrancamos treesitter (buffers de UI de plugins)
-          local ignore_ft = {
-            "TelescopePrompt",
-            "toggleterm"
-          }
-          
-          if vim.tbl_contains(ignore_ft, ft) or bt ~= "" then 
-            return 
+          -- Solo buffers de archivo: los de UI de plugins (prompt de Telescope,
+          -- neo-tree, quickfix) tienen buftype propio.
+          if vim.bo[args.buf].buftype ~= "" then return end
+          -- Arranca solo si hay parser para el lenguaje. Sin pcall alrededor de
+          -- start: un parser o una query rota tiene que verse, no esconderse.
+          local lang = vim.treesitter.language.get_lang(vim.bo[args.buf].filetype)
+          if lang and vim.treesitter.language.add(lang) then
+            vim.treesitter.start(args.buf, lang)
           end
-
-          -- Intento seguro de arranque nativo (API 0.12)
-          pcall(vim.treesitter.start, args.buf)
         end,
       })
     end,
