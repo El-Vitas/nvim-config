@@ -20,6 +20,6 @@ return {
     -- una tarea aparte (ver docs/decisions.md, D-12).
     "petertriho/nvim-scrollbar",
     branch = "v1",
-    opts = { handlers = { diagnostic = true } },
+    opts = {}, -- defaults: cursor y diagnósticos (las marcas de cambios las pone review-mode)
   },
 }

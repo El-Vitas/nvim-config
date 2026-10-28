@@ -25,14 +25,9 @@ return {
   {
     "windwp/nvim-ts-autotag",
     event = { "BufReadPre", "BufNewFile" },
-    opts = {
-      opts = {
-        -- Configuración para React/HTML
-        enable_close = true,           -- Cierra etiqueta al escribir >
-        enable_rename = true,          -- Si cambias <div> cambia el cierre </div>
-        enable_close_on_slash = true,  -- Cierra al poner /
-      },
-    },
+    -- Por defecto ya cierra la etiqueta al escribir `>` y renombra el cierre al
+    -- cambiar la apertura; esto agrega cerrarla al escribir `</`.
+    opts = { opts = { enable_close_on_slash = true } },
   },
 }
 

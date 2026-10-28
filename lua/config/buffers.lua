@@ -29,7 +29,11 @@ local function touch(b)
       -- Candidato a cerrar: viejo, no el actual, sin cambios y no visible.
       if cand ~= b and not vim.bo[cand].modified and #vim.fn.win_findbuf(cand) == 0 then
         table.remove(order, i)
-        pcall(vim.api.nvim_buf_delete, cand, {})
+        -- `:bdelete` (no `nvim_buf_delete`, que equivale a :bwipeout): el buffer
+        -- sale de la lista y se descarga, pero conserva su número, así que la
+        -- quickfix (lista de cambios de review), las marcas y el jumplist
+        -- siguen apuntando al archivo.
+        pcall(vim.cmd, "bdelete " .. cand)
         removed = true
         break
       end

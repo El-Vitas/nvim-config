@@ -45,14 +45,8 @@ return {
   {
     "nvim-treesitter/nvim-treesitter-context",
     dependencies = { "nvim-treesitter/nvim-treesitter" },
-    opts = {
-      max_lines = 3,
-      min_window_height = 0,
-      line_numbers = true,
-      multiline_threshold = 1,
-      trim_scope = 'outer',
-      mode = 'cursor',
-    },
+    -- Como mucho 3 líneas de contexto, y cada nodo en una sola línea.
+    opts = { max_lines = 3, multiline_threshold = 1 },
   },
 }
 
