@@ -1,0 +1,112 @@
+id: FEA-REV
+name: Vistas de review
+purpose: >-
+  Cómo se ve un archivo contra la base de comparación (normal, inline, split) y cómo se comportan las columnas al
+  cambiar de archivo, de ventana o de pestaña.
+scope: review-vistas
+rules:
+  - id: BR-17205e2
+    status: active
+    title: Las ventanas especiales no desarman el par y nada se filtra a otras ventanas
+    rule: >-
+      Pasar el foco al árbol, a la ayuda, a la quickfix o a una ventana flotante no cambia el par del split. Las
+      opciones que el split pone en sus dos columnas (resaltado del diff, folds, wrap) no pasan a ninguna otra ventana
+      ni a las ventanas nuevas.
+    why: >-
+      El usuario consulta el árbol o la ayuda en medio de una revisión y espera volver al mismo par; una ventana nueva
+      que nace con el resaltado verde del diff parece un error.
+    context: Verificado por tests/e2e/split_windows.lua (W7-W9).
+    scenarios:
+      - title: Ventana nueva durante el split
+        given: La vista split está activa
+        when: El usuario abre una ventana nueva con :new
+        then: La ventana nueva no tiene el resaltado ni el modo diff del split
+  - id: BR-35c4a1a
+    status: active
+    title: La vista inline muestra lo borrado donde estaba
+    rule: >-
+      En la vista inline las líneas borradas se muestran en rojo encima de la línea que ahora ocupa su lugar, y un
+      borrado al final del archivo se muestra debajo de la última línea. Las líneas agregadas se resaltan en verde.
+    why: >-
+      La posición de lo borrado es parte de la información; mostrar una línea borrada del final antes de la última línea
+      afirma un orden falso.
+    context: Verificado por tests/views/inline_spec.lua.
+    scenarios:
+      - title: Borrado al final
+        given: La base tiene a, b, c, d y el archivo tiene a, b, c
+        when: El usuario mira la vista inline
+        then: La línea "d" aparece en rojo debajo de "c"
+  - id: BR-9d079b2
+    status: active
+    title: La vista es global y sigue al archivo activo
+    rule: >-
+      La vista de review (normal, inline o split) es una sola para todo el editor y se aplica al archivo que tiene el
+      foco. Cambiar de archivo no cambia la vista. Cambiar de vista desde cualquiera de las dos columnas del split
+      limpia las dos.
+    why: >-
+      El usuario revisa varios archivos seguidos con la misma vista; tener que volver a elegirla en cada archivo, o que
+      una de las dos columnas quede colgada al cambiar de vista, rompe la revisión.
+    context: Verificado por tests/e2e/split_hard.lua (2-4) y split_reentry.lua.
+    scenarios:
+      - title: Cambiar de vista desde la columna HEAD
+        given: La vista split está activa y el foco está en la columna HEAD
+        when: El usuario pasa a la vista normal
+        then: Desaparecen las dos columnas del par y ninguna ventana queda en modo diff
+  - id: BR-c517e19
+    status: active
+    title: Split se reduce a una columna cuando no hay nada que comparar
+    rule: >-
+      Con la vista split activa, un archivo sin cambios contra la base, un archivo nuevo sin base o un archivo fuera del
+      repo se muestran en una sola columna. Al volver a un archivo con cambios, el par se arma solo. Fuera del repo el
+      editor no cambia ninguna opción de la ventana.
+    why: >-
+      Una columna HEAD vacía o idéntica ocupa media pantalla sin aportar nada; tocar opciones de archivos ajenos al repo
+      sorprende al usuario.
+    context: Verificado por tests/e2e/split_windows.lua (W3-W6, W16c-W16d).
+    scenarios:
+      - title: Archivo idéntico a la base
+        given: La vista split está activa
+        when: El usuario abre un archivo sin cambios contra la base
+        then: Se ve en una sola columna y la vista sigue siendo split
+  - id: BR-d9e5c68
+    status: active
+    title: En split hay un solo par, que sigue al archivo
+    rule: >-
+      Con la vista split hay como mucho un par por pestaña, una columna HEAD y una columna de edición, y la columna HEAD
+      muestra siempre la base del archivo que se está editando. Nunca queda una columna HEAD sin su par ni una ventana
+      sola en modo diff. Los archivos siempre se abren en la columna de edición, nunca en la HEAD.
+    why: >-
+      Un par extra o una columna huérfana muestran una comparación que ya no corresponde a lo que se edita y confunden
+      la revisión.
+    context: Verificado por tests/e2e/split_windows.lua (W1, W2, W10, W14).
+    scenarios:
+      - title: Cambiar de archivo
+        given: La vista split muestra keep.ts contra su base
+        when: El usuario abre mod.ts, que también tiene cambios
+        then: Sigue habiendo un solo par y la columna HEAD muestra la base de mod.ts
+      - title: Otra pestaña
+        given: La pestaña 1 tiene el par de keep.ts
+        when: El usuario abre mod.ts en una pestaña nueva
+        then: El par está en la pestaña 2 y la pestaña 1 no queda con columnas colgadas
+  - id: BR-f158336
+    status: active
+    title: Cerrar una columna del split a mano pasa a la vista normal
+    rule: >-
+      Si el usuario cierra a mano cualquiera de las dos columnas del split (o la pestaña que las contiene, o la ventana
+      de código que tenía el par), se cierra la otra columna y la vista global pasa a normal. El par no vuelve a
+      aparecer solo al cambiar de foco o de archivo; vuelve con <leader>rs o <leader>rv.
+    why: >-
+      Decisión del dueño (2026-10-28). Cerrar una columna es decir "no quiero split"; que el par reapareciera en el
+      siguiente cambio de foco deshacía una acción del usuario por su cuenta.
+    context: >-
+      Los cierres que hace el propio plugin (al cambiar de vista o de archivo) no cuentan. Verificado por
+      tests/e2e/split_windows.lua (W10-W13, W15-W16b).
+    scenarios:
+      - title: Cerrar la columna HEAD
+        given: La vista split muestra el par de keep.ts
+        when: El usuario cierra la columna HEAD y después pasa el foco a otra ventana y vuelve
+        then: keep.ts sigue en una sola columna y la vista es normal
+      - title: Cambiar de vista no es un cierre
+        given: La vista split está activa
+        when: El usuario pasa a la vista inline
+        then: La vista queda en inline, no en normal

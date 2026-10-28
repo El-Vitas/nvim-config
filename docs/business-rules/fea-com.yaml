@@ -1,0 +1,76 @@
+id: FEA-COM
+name: Comentarios de review
+purpose: Cómo se crean, editan, resuelven y guardan los comentarios de revisión, incluidos los que agrega el agente.
+scope: review-comentarios
+rules:
+  - id: BR-5b5b46d
+    status: active
+    title: Los comentarios no se pierden
+    rule: >-
+      Los comentarios se guardan en el repo donde se cargaron. Un corte a mitad de guardado nunca deja el archivo de
+      comentarios vacío ni a medias, y si el archivo está ilegible se aparta con otro nombre y se avisa en vez de
+      tratarlo como vacío. Si no se pueden guardar (por ejemplo, Neovim abierto fuera de un repo), el editor avisa. Al
+      cambiar de directorio a otro repo con :cd, se guardan los del repo anterior y se cargan los del nuevo.
+    why: >-
+      Los comentarios son el producto de la revisión; perderlos en silencio, o escribir los de un proyecto en otro,
+      destruye trabajo del usuario.
+    context: Verificado por tests/core/store_spec.lua y state_spec.lua.
+    scenarios:
+      - title: Archivo corrupto
+        given: comments.json quedó cortado a la mitad
+        when: El usuario abre Neovim
+        then: El archivo se aparta como comments.json.corrupt-<fecha>, se avisa y el próximo guardado no lo pisa
+      - title: Cambio de repo
+        given: Hay comentarios del repo A cargados
+        when: El usuario hace :cd al repo B
+        then: Los comentarios de A quedan guardados en A y se ven los de B
+  - id: BR-891a645
+    status: active
+    title: Las acciones por cursor actúan sobre el comentario que se ve
+    rule: >-
+      Cuando varios comentarios cubren la línea del cursor, editar, resolver, borrar y el peek actúan sobre el más
+      específico (el de rango más corto). Editar desde el popup o desde el peek cambia el comentario que se estaba
+      viendo, aunque mientras tanto cambien las líneas del archivo. El peek funciona también sobre un comentario de
+      archivo.
+    why: El peek mostraba un comentario y la tecla de editar cambiaba otro; el usuario editaba lo que no estaba mirando.
+    context: Verificado por tests/comments/mode_spec.lua.
+    scenarios:
+      - title: Comentarios anidados
+        given: Un comentario cubre las líneas 1 a 5 y otro solo la línea 3
+        when: El usuario edita con el cursor en la línea 3
+        then: Cambia el comentario de la línea 3 y el de 1 a 5 queda igual
+  - id: BR-8d91a7e
+    status: active
+    title: Lo que manda el agente se valida y nunca pisa trabajo sin guardar
+    rule: >-
+      El agente solo puede agregar comentarios con ruta dentro del repo, línea válida y texto no vacío, y no puede
+      firmar como el usuario. Pedir contexto de un comentario devuelve como mucho 500 líneas y nunca lee archivos fuera
+      del repo. Si el agente cambia en disco un archivo que el usuario tiene con cambios sin guardar, el buffer no se
+      toca y el editor avisa una vez. Los archivos que no están en UTF-8 no se reconcilian solos.
+    why: >-
+      Un valor mal tipeado por el agente quedaba guardado y rompía el pintado de comentarios en cada arranque; un rango
+      enorme congelaba el editor; y el trabajo sin guardar del usuario no puede perderse por un cambio del agente.
+    context: Verificado por tests/agent/rpc_spec.lua y watch_spec.lua.
+    scenarios:
+      - title: Línea inválida
+        given: El agente está conectado
+        when: Agrega un comentario con lnum = "5" (texto)
+        then: El comentario se rechaza y no se guarda nada
+      - title: Conflicto con cambios sin guardar
+        given: El usuario editó foo.ts sin guardar
+        when: El agente reescribe foo.ts en disco
+        then: El buffer conserva la edición del usuario y aparece un aviso
+  - id: BR-e87ea8b
+    status: active
+    title: Los alias en minúscula solo actúan como comando entero
+    rule: >-
+      Los alias en minúscula de review (:rl, :rv, :rs y el resto) solo se convierten en el comando cuando son la línea
+      de comandos completa. Dentro de una sustitución, un :g o un texto, quedan como se escribieron.
+    why: >-
+      Un alias que se expandía en cualquier posición convertía :%s/rl/x/g en :%s/Rl/x/g y hacía que :g/rt/d borrara
+      otras líneas.
+    scenarios:
+      - title: Sustitución
+        given: Una línea contiene "rl"
+        when: El usuario ejecuta :%s/rl/X/g
+        then: Se reemplaza "rl", no "Rl"

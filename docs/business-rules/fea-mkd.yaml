@@ -1,0 +1,22 @@
+id: FEA-MKD
+name: Markdown
+purpose: Cómo se ven y se editan los archivos markdown.
+scope: markdown
+rules:
+  - id: BR-f507ed6
+    status: active
+    title: Markdown se ve renderizado y se edita crudo
+    rule: >-
+      En modo normal y visual un archivo markdown se ve renderizado (títulos, código, listas, tablas como grilla); en
+      modo insert se ve el texto crudo, y la línea del cursor siempre se ve cruda. <leader>m alterna renderizado y
+      crudo; <leader>M abre o cierra una vista previa en split desde cualquiera de los dos paneles.
+    why: Leer renderizado y editar viendo los caracteres reales evita adivinar dónde termina un enlace o una tabla.
+    scenarios:
+      - title: Tabla larga
+        given: Una tabla cuyas celdas no entran en el ancho de la ventana
+        when: El usuario la mira en modo normal
+        then: Las celdas se parten dentro de su columna y los bordes quedan alineados en todas las líneas
+      - title: Cerrar la vista previa desde ella
+        given: La vista previa está abierta y el foco está en ella
+        when: El usuario aprieta <leader>M
+        then: La vista previa se cierra

@@ -1,0 +1,63 @@
+id: FEA-EDI
+name: Edición de código
+purpose: Autocompletado, sugerencias de Copilot, formato y diagnósticos mientras se escribe.
+scope: edicion
+rules:
+  - id: BR-3721cab
+    status: active
+    title: Copilot se acepta con Ctrl+j y no se adueña de Tab
+    rule: >-
+      Una sugerencia de Copilot se acepta con Ctrl+j. Tab en modo insert queda para navegar el menú de autocompletado y
+      nunca acepta una sugerencia de Copilot.
+    why: >-
+      Tab ya mueve la selección del autocompletado; si también aceptara Copilot, la misma tecla haría dos cosas según
+      qué esté a la vista.
+    scenarios:
+      - title: Aceptar
+        given: Copilot muestra una sugerencia en gris
+        when: El usuario aprieta Ctrl+j
+        then: La sugerencia se inserta
+      - title: Tab
+        given: Copilot muestra una sugerencia y el menú de autocompletado está abierto
+        when: El usuario aprieta Tab
+        then: Se selecciona el siguiente ítem del menú y la sugerencia de Copilot no se inserta
+  - id: BR-4a73329
+    status: active
+    title: Copilot no recibe archivos de secretos
+    rule: >-
+      Copilot queda apagado en archivos de secretos y credenciales (.env y sus variantes, llaves .pem y .key, id_rsa,
+      .npmrc, .netrc, credentials y similares), así su contenido no sale del equipo.
+    why: Copilot manda a GitHub el texto de cada buffer abierto, desde que se abre y antes de escribir nada.
+    scenarios:
+      - title: Abrir un .env
+        given: Copilot está activo en el editor
+        when: El usuario abre .env
+        then: Copilot está apagado en ese buffer
+  - id: BR-610e897
+    status: active
+    title: El autocompletado ofrece lo del servidor de lenguaje y expande sus snippets
+    rule: >-
+      Al escribir en modo insert, el menú de autocompletado ofrece las sugerencias del servidor de lenguaje del archivo
+      (sin las de tipo texto plano) y, al confirmar una función, expande su snippet con los argumentos.
+    why: >-
+      Las sugerencias de texto plano repiten palabras del archivo y tapan las útiles; expandir el snippet ahorra
+      escribir la firma.
+    scenarios:
+      - title: Miembros de un objeto
+        given: Un archivo TypeScript con el servidor vtsls activo
+        when: El usuario escribe "Math." en modo insert
+        then: El menú ofrece SQRT2, LOG10E y el resto de miembros de Math
+  - id: BR-b254fba
+    status: active
+    title: Formatear con <leader>p usa el formateador del lenguaje
+    rule: >-
+      <leader>p formatea el archivo con el formateador configurado para su lenguaje (Prettier para JavaScript y
+      TypeScript, StyLua para Lua) y, si no hay uno, con el servidor de lenguaje. Formatear no bloquea el editor.
+    why: >-
+      Un solo atajo para formatear cualquier archivo, con el mismo resultado que obtiene el resto del equipo con sus
+      herramientas.
+    scenarios:
+      - title: TypeScript
+        given: Un archivo .ts con la línea "const   x=1"
+        when: El usuario aprieta <leader>p
+        then: La línea queda "const x = 1;"

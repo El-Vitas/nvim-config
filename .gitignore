@@ -1,0 +1,6 @@
+# Dependencias del CLI de reglas (bun install)
+node_modules/
+
+# Registro de reglas: el YAML es la fuente de verdad; la base y los respaldos se regeneran
+docs/business-rules/rules.db*
+docs/business-rules/history/

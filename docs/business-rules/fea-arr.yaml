@@ -1,0 +1,40 @@
+id: FEA-ARR
+name: Arranque y carga
+purpose: Qué se carga al abrir Neovim y qué se posterga hasta que se usa.
+scope: cross-cutting
+rules:
+  - id: BR-21dae81
+    status: active
+    title: Abrir un proyecto JavaScript no congela el editor
+    rule: >-
+      Cuando el servidor de lenguaje de un proyecto pide vigilar sus archivos, el editor no se bloquea mientras arma esa
+      vigilancia, aunque el proyecto tenga decenas de miles de carpetas.
+    why: >-
+      Sin esto, abrir un archivo de FastCase dejaba el editor trabado 4,6 s recorriendo 38 000 carpetas, y cualquier
+      atajo en esos segundos se sentía lento.
+    context: Depende de que el sistema tenga inotifywait (paquete inotify-tools). Ver D-05.
+    scenarios:
+      - title: Proyecto grande
+        given: Un proyecto con 38 000 carpetas, incluido node_modules
+        when: El usuario abre un archivo .ts y aprieta <leader>e enseguida
+        then: El árbol abre en menos de 100 ms
+  - id: BR-8f31f0c
+    status: active
+    title: Lo que no se usa no se carga al arrancar
+    rule: >-
+      Al abrir Neovim no se cargan el buscador, el autocompletado, harpoon ni los servidores de lenguaje; cada uno se
+      carga la primera vez que se usa (su atajo, el modo insert o el primer archivo abierto). El árbol sí se carga al
+      arrancar, porque abrir un directorio (nvim .) lo muestra.
+    why: Cada herramienta cargada de más alarga el arranque aunque la sesión no la use.
+    context: >-
+      El arranque queda dominado por abrir el primer archivo (resaltado de sintaxis y review-mode), unos 265 ms en
+      FastCase. Ver D-06.
+    scenarios:
+      - title: Abrir sin archivos
+        given: Neovim recién abierto sin argumentos
+        when: Se consulta qué plugins están cargados
+        then: El buscador, el autocompletado y harpoon no están cargados
+      - title: Primer uso
+        given: El buscador no está cargado
+        when: El usuario aprieta <leader>ff
+        then: El buscador se carga y abre

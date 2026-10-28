@@ -1,0 +1,129 @@
+id: FEA-TRE
+name: Árbol de archivos y de cambios
+purpose: Qué muestra el panel lateral (archivos del proyecto o cambios pendientes) y cómo se abre, se cierra y se revela.
+scope: arbol
+rules:
+  - id: BR-124c6ce
+    status: active
+    title: El árbol de archivos oculta lo ignorado, muestra los dotfiles y nunca .git
+    rule: >-
+      El árbol de archivos oculta los archivos ignorados por git, muestra siempre los dotfiles (.env, .gitignore) y
+      nunca muestra la carpeta .git. El interruptor H muestra u oculta los ignorados, y el mismo interruptor gobierna el
+      buscador de archivos.
+    why: >-
+      Los dotfiles son archivos del proyecto que el usuario edita; lo ignorado es basura generada. Si el árbol y el
+      buscador tuvieran interruptores distintos, la misma pregunta tendría dos respuestas según dónde esté parado el
+      usuario.
+    scenarios:
+      - title: Estado inicial
+        given: Neovim recién abierto en un repo con node_modules ignorado y un .env
+        when: El usuario abre el árbol de archivos
+        then: Ve .env y no ve node_modules ni .git
+      - title: Interruptor
+        given: El árbol de archivos está abierto y oculta node_modules
+        when: El usuario aprieta H
+        then: node_modules aparece en el árbol y en el buscador de archivos; .git sigue oculto
+  - id: BR-1e58c05
+    status: active
+    title: El árbol de cambios compara contra la base elegida en review
+    rule: >-
+      Cuando el usuario eligió una base de comparación en review (un commit), el árbol de cambios muestra los cambios
+      contra esa base, también al cerrarlo y reabrirlo y al revelar un archivo. Con base HEAD o índice muestra los
+      cambios sin commitear.
+    why: >-
+      La revisión de una rama se hace contra el commit donde empezó; si el árbol mostrara solo lo no commiteado, lo ya
+      commiteado en la rama desaparecería de la revisión.
+    scenarios:
+      - title: Archivo commiteado después de la base
+        given: La base de review es el commit base y c.ts se agregó en un commit posterior
+        when: El usuario abre el árbol de cambios
+        then: c.ts aparece en el árbol
+      - title: Reabrir conserva la base
+        given: El árbol de cambios muestra c.ts por la base elegida
+        when: El usuario cierra y reabre el árbol con <leader>e
+        then: c.ts sigue apareciendo
+  - id: BR-53dca84
+    status: active
+    title: Abrir el árbol y cambiar de buffer no traban el editor
+    rule: >-
+      Abrir o cambiar el modo del árbol (<leader>e, <leader>s) bloquea el editor menos de 100 ms, y cambiar de buffer
+      con el árbol abierto menos de 5 ms, en un proyecto de 1 400 archivos con una carpeta ignorada de más de 500 000
+      archivos.
+    why: >-
+      Son las acciones que el usuario hace decenas de veces por hora; antes tardaban hasta 4,5 s y 40 ms y era la queja
+      principal.
+    context: Medido en FastCase con Neovim 0.12.6 sin interfaz. Mediciones y causas en docs/decisions.md (D-01 a D-05).
+    scenarios:
+      - title: Árbol de cambios en un repo con node_modules grande
+        given: Un repo con 1 400 archivos versionados y node_modules ignorado con 571 000 archivos
+        when: El usuario aprieta <leader>s
+        then: El árbol de cambios aparece en menos de 100 ms
+  - id: BR-745f9f6
+    status: active
+    title: El marcador de archivo abierto refleja lo que está a la vista
+    rule: >-
+      El árbol marca con ● los archivos visibles en alguna ventana. El marcador aparece al mostrar el archivo en una
+      ventana y desaparece cuando ya no está visible en ninguna, aunque el buffer siga cargado.
+    why: >-
+      El marcador sirve para ubicar en el árbol lo que el usuario tiene en pantalla; un marcador que queda pegado
+      después de cerrar un split dice algo falso.
+    context: Antes de esta regla el marcador quedaba pegado al cerrar un split (D-03).
+    scenarios:
+      - title: Cerrar un split
+        given: c.ts está abierto en un split y marcado con ●
+        when: El usuario cierra ese split
+        then: El ● de c.ts desaparece en menos de medio segundo
+  - id: BR-8219e47
+    status: active
+    title: El árbol de cambios lista todo lo que cambió y nada de lo ignorado
+    rule: >-
+      El modo cambios (<leader>s) muestra los archivos modificados, borrados, renombrados y nuevos, incluidos los
+      archivos nuevos dentro de carpetas nuevas. Nunca muestra archivos ignorados por git.
+    why: >-
+      Es la vista con la que el usuario revisa qué va a commitear o revisar; un archivo nuevo escondido dentro de una
+      carpeta nueva es justo el que se olvida.
+    context: Los archivos ignorados (por ejemplo node_modules) no aportan nada a esa vista y además la volvían lenta (D-01).
+    scenarios:
+      - title: Archivo nuevo en carpeta nueva
+        given: Existe nueva/sub/n.ts sin commitear y fuera del índice
+        when: El usuario abre el árbol de cambios
+        then: Aparece nueva/sub/n.ts marcado como no versionado
+      - title: Carpeta ignorada
+        given: node_modules está en .gitignore y tiene archivos
+        when: El usuario abre el árbol de cambios
+        then: node_modules no aparece
+  - id: BR-c15818c
+    status: active
+    title: El árbol se reabre en el mismo modo en que se cerró
+    rule: >-
+      Al cerrar el árbol y volver a abrirlo con <leader>e, el árbol vuelve en el mismo modo (archivos o cambios) en que
+      estaba al cerrarse. Si nunca se abrió, abre en modo archivos.
+    why: >-
+      El usuario alterna entre ver todo el proyecto y ver solo lo que cambió; perder el modo al ocultar el panel lo
+      obliga a volver a elegirlo cada vez.
+    context: >-
+      El modo "cambios" respeta además la base de comparación de review (regla de base). Decisión técnica en
+      docs/decisions.md (D-08).
+    scenarios:
+      - title: Reabrir en modo cambios
+        given: El árbol está abierto en modo cambios
+        when: El usuario aprieta <leader>e dos veces
+        then: El árbol se cierra y vuelve a abrir en modo cambios
+      - title: Primera apertura
+        given: El árbol nunca se abrió en la sesión
+        when: El usuario aprieta <leader>e
+        then: El árbol abre en modo archivos
+  - id: BR-f542f58
+    status: active
+    title: Revelar el archivo actual sin cambiar de modo
+    rule: >-
+      <leader>E revela en el árbol el archivo que se está editando sin cambiar el modo del árbol. En modo cambios solo
+      lo revela si el archivo está entre los cambios; si no lo está, avisa y no hace nada.
+    why: >-
+      Revelar es para ubicarse, no para cambiar de vista; saltar al modo archivos sin pedirlo rompe la revisión en
+      curso.
+    scenarios:
+      - title: Archivo sin cambios en modo cambios
+        given: El árbol está en modo cambios y el archivo actual no tiene cambios
+        when: El usuario aprieta <leader>E
+        then: Aparece un aviso y el árbol sigue en modo cambios

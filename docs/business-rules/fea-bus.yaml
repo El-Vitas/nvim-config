@@ -1,0 +1,23 @@
+id: FEA-BUS
+name: Búsqueda
+purpose: Qué encuentran el buscador de archivos y la búsqueda de texto del proyecto.
+scope: busqueda
+rules:
+  - id: BR-5486683
+    status: active
+    title: Buscar archivos y texto respeta el mismo criterio de ocultos que el árbol
+    rule: >-
+      El buscador de archivos (<leader>ff) y la búsqueda de texto (<leader>fg) incluyen los dotfiles, excluyen siempre
+      la carpeta .git y excluyen los archivos ignorados por git salvo que el interruptor H esté encendido.
+    why: >-
+      El usuario espera encontrar en el buscador lo mismo que ve en el árbol; dos criterios distintos producen
+      resultados que parecen errores.
+    scenarios:
+      - title: Interruptor apagado
+        given: H está apagado y existe node_modules/pkg/lib/index.js
+        when: El usuario busca index.js con <leader>ff
+        then: No aparece el archivo de node_modules
+      - title: Dotfile
+        given: Existe .env en la raíz
+        when: El usuario busca .env con <leader>ff
+        then: Aparece .env

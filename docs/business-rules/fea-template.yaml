@@ -1,0 +1,21 @@
+id: FEA-XXX
+name: Nombre del feature
+purpose: Qué reglas agrupa este archivo y por qué existe.
+scope: nombre-del-modulo
+rules:
+  - id: BR-xxxxxxx
+    status: active
+    title: Título corto de la regla
+    rule: Enunciado normativo de la regla (el editor debe...).
+    why: Razón detrás de la regla.
+    context: >-
+      Contexto opcional: alcance, casos borde, decisiones relacionadas (docs/decisions.md).
+    scenarios:
+      - title: Escenario feliz
+        given: Estado inicial del editor
+        when: Acción del usuario o del editor
+        then: Resultado esperado verificable
+      - title: Escenario de rechazo
+        given: Estado inicial que viola la regla
+        when: Acción que intenta violarla
+        then: El editor no lo permite y lo comunica

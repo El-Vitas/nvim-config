@@ -1,0 +1,21 @@
+id: FEA-BUF
+name: Buffers abiertos
+purpose: Cuántos archivos quedan cargados a la vez y cuáles se cierran solos.
+scope: buffers
+rules:
+  - id: BR-da9557e
+    status: active
+    title: Se mantienen como máximo cinco archivos cargados
+    rule: >-
+      Al abrir un archivo nuevo, si quedan más de cinco archivos cargados, se cierra el que se usó hace más tiempo.
+      Nunca se cierra un archivo con cambios sin guardar ni uno visible en alguna ventana.
+    why: Mantiene corta la lista de buffers y el editor liviano, sin arriesgar trabajo sin guardar.
+    scenarios:
+      - title: Sexto archivo
+        given: Hay cinco archivos cargados, ninguno modificado ni visible salvo el actual
+        when: El usuario abre un sexto archivo
+        then: Se cierra el archivo usado hace más tiempo
+      - title: Archivo modificado
+        given: El archivo más antiguo tiene cambios sin guardar
+        when: El usuario abre un archivo que supera el límite
+        then: Ese archivo no se cierra

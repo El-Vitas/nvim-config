@@ -1,0 +1,70 @@
+id: FEA-SES
+name: Sesión
+purpose: Cómo se guarda y se restaura el estado de trabajo (archivos abiertos, ventanas, árbol) entre aperturas de Neovim.
+scope: sesion
+rules:
+  - id: BR-173fba4
+    status: active
+    title: Un mensaje de commit no pisa la sesión
+    rule: >-
+      Abrir Neovim para escribir un mensaje de commit o un rebase interactivo (git con EDITOR=nvim) nunca guarda ni
+      reemplaza la sesión del directorio.
+    why: Sin esto, el siguiente nvim sin argumentos restauraba solo el COMMIT_EDITMSG en vez del trabajo real.
+    scenarios:
+      - title: git commit
+        given: El directorio tiene una sesión con a.ts y c.ts
+        when: El usuario hace git commit y escribe el mensaje en Neovim
+        then: La sesión guardada sigue teniendo a.ts y c.ts
+  - id: BR-497b4df
+    status: active
+    title: Dejar de guardar la sesión detiene todo guardado
+    rule: >-
+      Después de <leader>qd, la sesión no se vuelve a guardar en lo que queda de la sesión de Neovim, ni al cambiar de
+      archivo, ni al perder el foco, ni al salir.
+    why: >-
+      El usuario usa <leader>qd cuando no quiere que esta sesión pise la guardada; un guardado que sigue ocurriendo por
+      otra vía rompe esa promesa.
+    context: Antes de esta regla, el guardado al cambiar de buffer seguía activo después de <leader>qd.
+    scenarios:
+      - title: Después de detener
+        given: El usuario apretó <leader>qd
+        when: Abre otro archivo y espera dos segundos
+        then: El archivo de sesión no se escribe
+  - id: BR-9fb04bc
+    status: active
+    title: Abrir Neovim sin archivos restaura la sesión del directorio
+    rule: >-
+      Al abrir Neovim sin archivos en un directorio, se restauran los archivos y ventanas de la última sesión de ese
+      directorio. Al abrir Neovim con un archivo, solo se abre ese archivo. En los dos casos el árbol vuelve a abrirse
+      si estaba abierto al salir de ese proyecto, con su modo y sus carpetas expandidas.
+    why: >-
+      Retomar el trabajo donde quedó es el caso común; abrir un archivo puntual es una intención distinta y no debe
+      arrastrar la sesión entera. El árbol es parte del puesto de trabajo del proyecto y se recuerda aparte.
+    scenarios:
+      - title: Sin argumentos
+        given: La última sesión del directorio tenía a.ts y c.ts abiertos
+        when: El usuario ejecuta nvim sin argumentos en ese directorio
+        then: a.ts y c.ts vuelven a estar abiertos
+      - title: Con un archivo
+        given: Existe una sesión guardada del directorio y el árbol estaba abierto al salir
+        when: El usuario ejecuta nvim README.md
+        then: Se abre solo README.md, con el árbol abierto
+  - id: BR-f1870a2
+    status: active
+    title: La sesión se guarda sola y con poco atraso
+    rule: >-
+      La sesión se guarda sin que el usuario lo pida, como máximo un segundo después del último cambio de archivo, de
+      inmediato al perder el foco de la terminal y al salir. Guardar nunca traba el cambio de archivo ni la apertura del
+      árbol o del buscador.
+    why: >-
+      El usuario cierra la terminal de golpe a veces; la sesión tiene que quedar al día igual. Guardar en cada salida de
+      buffer costaba 25 a 38 ms por acción (D-02).
+    scenarios:
+      - title: Guardado diferido
+        given: Hay una sesión activa
+        when: El usuario abre c.ts y espera un segundo
+        then: El archivo de sesión existe y refleja c.ts
+      - title: Cambio rápido de archivos
+        given: Hay una sesión activa
+        when: El usuario cambia de archivo diez veces en menos de un segundo
+        then: La sesión se guarda una sola vez, al final
