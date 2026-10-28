@@ -36,6 +36,26 @@ rules:
         given: La base tiene a, b, c, d y el archivo tiene a, b, c
         when: El usuario mira la vista inline
         then: La línea "d" aparece en rojo debajo de "c"
+  - id: BR-9503d46
+    status: active
+    title: Cerrar o cambiar columnas del split nunca cierra Neovim
+    rule: >-
+      Cambiar de archivo, cambiar de vista o cerrar cualquier columna del split (también con :q, también sobre archivos
+      markdown) nunca hace que Neovim se cierre ni pierda la sesión.
+    why: >-
+      Reportado el 2026-10-28: en split sobre un markdown, cambiar de archivo cerró Neovim de golpe (SIGSEGV). La causa
+      es un bug de Neovim que se dispara cuando un plugin consulta las ventanas en medio de un cierre; review-mode evita
+      que se dé esa situación.
+    context: Detalle técnico en review-mode/docs/decisions.md (B19). Verificado por tests/e2e/split_markdown.lua.
+    scenarios:
+      - title: Markdown a otro archivo
+        given: La vista split muestra doc.md con cambios
+        when: El usuario abre un archivo sin cambios
+        then: Neovim sigue abierto y el archivo se ve en una columna
+      - title: Cerrar la columna HEAD con :q
+        given: La vista split muestra doc.md con cambios
+        when: El usuario cierra la columna HEAD con :q
+        then: Neovim sigue abierto y la vista pasa a normal
   - id: BR-9d079b2
     status: active
     title: La vista es global y sigue al archivo activo
