@@ -21,6 +21,27 @@ rules:
         given: La vista split está activa
         when: El usuario abre una ventana nueva con :new
         then: La ventana nueva no tiene el resaltado ni el modo diff del split
+  - id: BR-2966d08
+    status: active
+    title: Salir del split no deja ningún archivo en modo diff
+    rule: >-
+      Después de salir de la vista split, ningún archivo queda en modo diff ni con el resaltado del split, aunque se
+      haya cambiado de archivo antes de salir, y aunque vuelva más tarde a la misma ventana. Los atajos de vista
+      (<leader>rn, <leader>ri, <leader>rs, <leader>rv) siempre cambian lo que se ve. Un diff que el usuario arme a mano
+      (:diffthis) no se toca.
+    why: >-
+      Reportado el 2026-10-28: al volver a un archivo que había estado en el par, seguía en modo diff y parecía que los
+      atajos de vista no hacían nada.
+    context: Detalle técnico en review-mode/docs/decisions.md (B20). Verificado por tests/e2e/split_windows.lua (W18-W20).
+    scenarios:
+      - title: Volver a un archivo que estuvo en el par
+        given: El split mostraba keep.ts y el usuario pasó a otro archivo y a la vista normal
+        when: Vuelve a keep.ts
+        then: keep.ts se ve sin diff y sin resaltado del split
+      - title: Diff manual
+        given: El usuario hizo :diffthis en dos archivos del repo con la vista normal
+        when: Cambia de ventana entre ellos
+        then: Los dos siguen en modo diff
   - id: BR-35c4a1a
     status: active
     title: La vista inline muestra lo borrado donde estaba
