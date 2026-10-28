@@ -3,6 +3,22 @@ name: Comentarios de review
 purpose: Cómo se crean, editan, resuelven y guardan los comentarios de revisión, incluidos los que agrega el agente.
 scope: review-comentarios
 rules:
+  - id: BR-15ce8ff
+    status: active
+    title: El export para el agente separa pendientes de respuestas
+    rule: >-
+      Al copiar los comentarios para un agente (:Rya, :Ryf), cada comentario pendiente sale numerado, y sus respuestas
+      van sangradas debajo con su autor, sin número. Varios comentarios en la misma línea salen en el orden en que se
+      crearon, igual en cada exportación.
+    why: >-
+      Si las respuestas del agente salían como ítems numerados, el agente las recibía de vuelta como tareas pendientes;
+      y un orden que cambiaba entre exportaciones hacía que "el 3" no fuera siempre el mismo comentario.
+    context: Verificado por tests/export/markdown_spec.lua.
+    scenarios:
+      - title: Comentario respondido
+        given: Un comentario pendiente tiene una respuesta del agente
+        when: El usuario exporta con :Rya
+        then: 'El comentario sale numerado y la respuesta va debajo como "↳ agent: …", sin número'
   - id: BR-5b5b46d
     status: active
     title: Los comentarios no se pierden

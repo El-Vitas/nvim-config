@@ -179,10 +179,22 @@ La revisión corrió `lua-language-server --check`, `jscpd` y cuatro revisores e
 
 En review-mode, los arreglos y su porqué están en `review-mode/docs/decisions.md` (B7 a B15 y D24 a D26).
 
-Lo que quedó pendiente, con el motivo:
+Lo que queda pendiente, con el motivo:
 
-- **Paleta de colores repetida** en lualine, onedarkpro, keymaps y markdown (unos 60 usos de literales hex). Consolidarla en un módulo es cosmético y toca el aspecto de todo el editor; conviene hacerlo con el editor abierto para comparar.
-- **`automatic_enable` de mason-lspconfig** habilita todo servidor instalado con mason (pyright está habilitado aunque la config no lo menciona). No se cambió porque desactivarlo cambia qué servidores arrancan.
-- **`sidebar._refresh` de review-mode** hace un `Neotree refresh` completo en cada cambio de comentarios, para un marcador 💬 que ningún renderer dibuja. Su suite verifica esa suscripción; quitarla es una decisión sobre la feature, no una corrección.
-- **`inline.render` sin debounce** en `TextChangedI`: 40 ms por tecla con 10 000 líneas muy modificadas. Solo afecta la vista inline en archivos grandes.
+- **`automatic_enable` de mason-lspconfig** habilita todo servidor instalado con mason (pyright está habilitado aunque la config no lo menciona). Decidir qué servidores arrancan es del dueño.
+- **`sidebar._refresh` de review-mode** hace un `Neotree refresh` en cada cambio de comentarios, para un marcador 💬 que ningún renderer dibuja. Con D-01 ese refresh cuesta unos 18 ms; quitarlo o terminar el marcador es una decisión sobre la feature.
+- **El gutter de comentarios** dibuja con el `lnum` guardado mientras el resaltado sigue al extmark: al insertar líneas sin guardar, el corchete queda una línea corrido hasta guardar. Arreglarlo toca la función que se evalúa por cada línea en cada redibujado.
+
+## D-18 · Una paleta compartida
+
+`lua/config/palette.lua` tiene los 13 colores que tienen que coincidir entre el tema, la statusline, el árbol, markdown y el cheatsheet (unos 60 usos de literales hex repetidos en cinco archivos). Los colores de un solo uso (los de cada tipo de carpeta, los fondos de los títulos de markdown) quedan en su archivo.
+
+- **Verificado:** el volcado de los 2 586 grupos de resaltado y del tema de lualine es idéntico antes y después. La única diferencia, `DevIconLogos`/`DevIconASM`, es ruido de nvim-web-devicons: dos extensiones comparten nombre con colores distintos y gana la que se recorra primero.
+
+## D-19 · Limpieza de opciones y semántica de cierre de buffers
+
+- Se borraron opciones iguales al valor por defecto de su plugin (verificado en el código de cada uno): nvim-ts-autotag, treesitter-context, which-key (`delay`), nvim-scrollbar, onedarkpro (`terminal_colors`, `highlight_inactive_windows`), nvim-web-devicons (`color_icons`). Quedan solo las que cambian algo, con su porqué.
+- which-key declara sus grupos en `opts.spec` en vez de un `config` propio.
+- El cheatsheet lista los atajos LSP que trae Neovim 0.12 (`grn`, `grr`, `gri`, `grt`, `gra`, `gO`) y ya no tiene el respaldo para versiones sin `footer` en ventanas flotantes.
+- `buffers.lua` cierra con `:bdelete` y no con `nvim_buf_delete` (que es `:bwipeout`): la quickfix de cambios de review, las marcas y el jumplist siguen apuntando al archivo, y review-mode recibe el `BufDelete` con el que libera sus caches.
 
