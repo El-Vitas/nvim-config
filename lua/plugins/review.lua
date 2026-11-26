@@ -1,7 +1,10 @@
 return {
   {
-    dir = "~/Dev/nvim/review-mode",
+    -- Con `dev = true`, lazy usa ~/Dev/nvim/review-mode si existe (donde se desarrolla) y si no
+    -- lo baja de GitHub (`dev.fallback` en init.lua). Así la config se instala en cualquier máquina.
+    "El-Vitas/review-mode.nvim",
     name = "review-mode",
+    dev = true,
     dependencies = {
       "nvim-lua/plenary.nvim",
       "MunifTanjim/nui.nvim",

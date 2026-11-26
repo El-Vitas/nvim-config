@@ -55,11 +55,23 @@ end
 -- render de una carpeta y no al leer este spec: son ~4600 líneas (~9 ms) que
 -- antes se pagaban en cada arranque aunque el árbol nunca se abriera.
 -- `false` = no está disponible → se usan los nf-md de FOLDER_ICONS (arriba).
+-- Sin la fuente instalada los glifos PUA salen como cuadros vacíos, así que el mapa solo se usa si
+-- MaterialFolders.ttf está en una carpeta de fuentes (install.sh la copia a ~/.local/share/fonts).
+local FONT_FILE = "MaterialFolders.ttf"
+local FONT_DIRS = { "~/.local/share/fonts", "~/.fonts", "~/Library/Fonts", "/usr/share/fonts", "/usr/local/share/fonts" }
+
+local function material_font_installed()
+  for _, dir in ipairs(FONT_DIRS) do
+    if #vim.fn.globpath(vim.fn.expand(dir), "**/" .. FONT_FILE, false, true) > 0 then return true end
+  end
+  return false
+end
+
 local MF
 local function material_folders()
   if MF == nil then
     local ok, mod = pcall(require, "material_folders")
-    MF = ok and mod or false
+    MF = ok and material_font_installed() and mod or false
   end
   return MF
 end

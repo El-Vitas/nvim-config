@@ -14,10 +14,10 @@ Adapted from the `git-flow` skill of the `mio` repo. Read it before running `git
 
 # Critical rules
 
-## NEVER push
+## Push only when asked
 
-The agent never runs `git push`. It creates branches, stages files and writes commits. The owner
-pushes and opens PRs.
+The agent pushes and opens PRs only when the owner asks for it. Otherwise it creates branches,
+stages files and writes commits, and the owner pushes.
 
 ## NEVER stage everything
 
@@ -34,14 +34,16 @@ Commits are authored only by the owner. No `Co-Authored-By` lines, no "Generated
 
 ## Branches
 
-`main` follows the remote `origin/main`. For a change of more than one commit, work on a branch:
+Git flow, always. `main` is what is released and `develop` is where work comes together. Every
+change starts on a branch from `develop`:
 
 ```
 <type>/<short-description>      # feat/review-base-selector, fix/neotree-marker
 ```
 
-Types: `feat/`, `fix/`, `perf/`, `chore/`, `docs/`, `refactor/`, `test/`. Kebab-case, one logical
-change per branch. A single small commit may go straight to `main` when the owner says so.
+Types: `feature/` or `feat/`, `fix/`, `perf/`, `chore/`, `docs/`, `refactor/`, `test/`. Kebab-case,
+one logical change per branch. The branch merges into `develop` through a PR, and `develop` reaches
+`main` through another PR. Nothing is committed straight to `main` or `develop`.
 
 # Commit message format
 
@@ -64,19 +66,18 @@ change per branch. A single small commit may go straight to `main` when the owne
 `treesitter`, `ui`, `keymaps`, `rules`, `docs`.
 
 **Subject**: imperative, lowercase first letter, no final period, max 72 characters, no vague words
-("cambios", "arreglos", "update"). Language: neutral Spanish, following the owner's global rule;
-the `type(scope):` prefix stays in English.
+("changes", "fixes", "update"). Language: English, always, subject and body.
 
 **Body**: why the change was made and what it does at a high level, in bullets that start with a verb,
 wrapped at 100 columns. It points to `docs/decisions.md` when a decision explains it. It is not a
 code review.
 
 ```
-perf(neotree): abrir el árbol de cambios sin listar ignorados
+perf(neotree): open the changes tree without listing ignored files
 
-- Pasa --ignored=no al git status de la vista de cambios: listaba cada archivo de
-  node_modules (571 230 líneas) y tardaba 4,5 s en abrir
-- Ver docs/decisions.md (D-01)
+- Passes --ignored=no to the changes view's git status: it listed every node_modules
+  file (571,230 lines) and took 4.5 s to open
+- See docs/decisions.md (D-01)
 ```
 
 ## Commit organization
@@ -87,8 +88,8 @@ three commits, not one. The lockfile goes with the change that needed it, or alo
 
 # Pull requests
 
-Check `gh` first: `command -v gh && gh auth status`. With `gh`, create the PR with `--base main` and
-a title equal to the first commit's subject. Without it, give the owner the title and the body to
+Check `gh` first: `command -v gh && gh auth status`. With `gh`, create the PR with `--base develop` and
+a title equal to the first commit's subject; the release PR goes from `develop` to `main`. Without it, give the owner the title and the body to
 paste. The body follows this template, with no empty section:
 
 ```markdown
@@ -107,8 +108,8 @@ paste. The body follows this template, with no empty section:
 
 # Never
 
-- `git push`, `git add .`, `git add -A`
-- Commit without the owner asking
+- `git push` without the owner asking, `git add .`, `git add -A`
+- Commit without the owner asking, or straight to `main` or `develop`
 - Mix unrelated changes in one commit
-- Vague messages or past tense ("agregué", "cambios")
+- Messages in any language other than English, vague or in the past tense ("added", "changes")
 - Co-author or generated-by trailers
