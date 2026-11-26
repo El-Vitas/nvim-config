@@ -11,12 +11,14 @@ Config personal de Neovim 0.12 con lazy.nvim. `~/.config/nvim` es un symlink a e
 | `tests/` | Pruebas con el editor completo y las teclas reales (`tests/run.sh`) |
 | `lua/plugins/` | Un spec de lazy por plugin o grupo |
 | `lua/material_folders.lua` | Tabla generada por `../material-font`. No se edita a mano |
+| `fonts/` | `MaterialFolders.ttf` y su regla de fontconfig, copiadas de `../material-font` para el instalador |
+| `install.sh` | Instalador de una línea para otra máquina (lo documenta `README.md`) |
 | `docs/business-rules/` | Qué tiene que hacer el editor. Se consulta con el CLI |
 | `docs/decisions.md` | Por qué está hecho así, con las mediciones (`D-NN`) |
 | `tools/rules-cli/` | CLI del registro de reglas (bun) |
 | `.agents/skills/` | Skills del repo; `.claude/skills/` son enlaces a ellas |
 
-Repos hermanos en `~/Dev/nvim`: `review-mode/` (plugin de revisión, cargado con `dir =`) y `material-font/` (fuente de iconos de carpetas).
+Repos hermanos en `~/Dev/nvim`: `review-mode/` (plugin de revisión, publicado como `El-Vitas/review-mode.nvim`; con `dev = true` lazy usa la copia local si existe y si no la de GitHub) y `material-font/` (generador de la fuente de iconos de carpetas). Si se regenera la fuente, se copia de nuevo a `fonts/`.
 
 ## Antes de cambiar algo
 
@@ -27,10 +29,10 @@ Repos hermanos en `~/Dev/nvim`: `review-mode/` (plugin de revisión, cargado con
 ## Reglas del repo
 
 - **Archivos.** Todo cambio en un archivo se hace con las herramientas de edición, archivo por archivo. Nunca con `sed -i`, heredocs, `python -c` ni redirecciones. El CLI de reglas y lazy (que reescribe `lazy-lock.json`) son las únicas herramientas que escriben archivos del repo.
-- **Idioma.** Español neutro en comentarios, docs, reglas y mensajes de commit. Nada de voseo ni modismos regionales. Los textos que ve el usuario dentro de Neovim (notificaciones, cheatsheet) están en inglés y siguen así.
+- **Idioma.** Mensajes de commit, `README.md` y los textos que ve el usuario dentro de Neovim (notificaciones, cheatsheet), en inglés. Comentarios, docs internos y reglas, en español neutro, sin voseo ni modismos regionales.
 - **Comentarios.** Explican el porqué en presente. La historia y las mediciones van en `docs/decisions.md`. Detalle en la skill `code-comments`.
 - **Prosa.** Docs, reglas y cuerpos de commit siguen la skill `vitas-writing`.
-- **Git.** Skill `git-flow`. Nunca `git push`, nunca `git add .`, commit solo cuando el dueño lo pide, sin trailers de coautoría.
+- **Git.** Skill `git-flow`: git flow siempre (rama desde `develop`, PR a `develop`, `develop` → `main`), nunca `git add .`, commit y push solo cuando el dueño lo pide, sin trailers de coautoría.
 - **Subagentes.** Antes de lanzar subagentes se le pregunta al dueño qué modelo y cuántos.
 - **Rendimiento.** `<leader>e`, `<leader>s` y cambiar de buffer tienen presupuesto (regla "Abrir el árbol y cambiar de buffer no traban el editor"). Nada sincrónico contra git o el disco en autocmds de `BufEnter`, `WinEnter`, renders del árbol ni la statusline.
 - **Temporizadores.** Un `vim.uv.new_timer()` reutilizado por módulo, no `vim.defer_fn` + `stop()` (D-13).
