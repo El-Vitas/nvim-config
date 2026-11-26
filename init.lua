@@ -41,6 +41,8 @@ require("lazy").setup({
     { import = "plugins" },
   },
   install = { colorscheme = { "onedark_vivid" } },
+  -- Plugins propios (`dev = true`): la copia local de ~/Dev/nvim si existe, y si no la de GitHub.
+  dev = { path = "~/Dev/nvim", fallback = true },
   checker = { enabled = false }, -- sin notificación de "Plugin Updates" al arrancar
   -- Ningún plugin usa luarocks: apagarlo evita el error de `:checkhealth lazy`
   -- y que lazy intente instalar hererocks.
