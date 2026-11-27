@@ -1,24 +1,24 @@
 return {
   {
     "neovim/nvim-lspconfig",
-    -- Al abrir el primer archivo (no en `nvim` vacío). BufReadPre llega antes
-    -- que el FileType del buffer, así que `vim.lsp.enable` queda registrado a
-    -- tiempo para ese mismo archivo.
+    -- On opening the first file (not on an empty `nvim`). BufReadPre arrives before
+    -- the buffer's FileType, so `vim.lsp.enable` is registered in
+    -- time for that same file.
     event = { "BufReadPre", "BufNewFile" },
     dependencies = {
       "hrsh7th/cmp-nvim-lsp",
-      "williamboman/mason.nvim", -- pone los binarios de mason en el PATH
+      "williamboman/mason.nvim", -- puts mason's binaries on the PATH
       "williamboman/mason-lspconfig.nvim",
     },
     config = function()
       local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
-      -- Color blanco crema para los Inlay Hints
+      -- Cream-white color for Inlay Hints
       vim.api.nvim_set_hl(0, "LspInlayHint", { fg = "#BDBDBD", bg = "NONE", italic = true })
 
-      -- Recorta cada inlay hint a 30 caracteres. Se mide y se corta por
-      -- CARACTER (strchars/strcharpart), no por byte: un corte por byte partía
-      -- un carácter UTF-8 (→, …, acentos) y se mostraba como "?".
+      -- Trims each inlay hint to 30 characters. It is measured and cut by
+      -- CHARACTER (strchars/strcharpart), not by byte: a byte cut split
+      -- a UTF-8 character (→, …, accents) and it displayed as "?".
       local inlay_hint_handler = vim.lsp.handlers["textDocument/inlayHint"]
       vim.lsp.handlers["textDocument/inlayHint"] = function(err, result, ctx, config)
         if result then
@@ -51,23 +51,23 @@ return {
         return inlay_hint_handler(err, result, ctx, config)
       end
 
-      -- Configuración de diagnósticos
+      -- Diagnostics configuration
       vim.diagnostic.config({
         virtual_text = { prefix = "●" },
         float = {
           border = "rounded",
-          source = true, -- mostrar siempre de qué servidor viene
+          source = true, -- always show which server it comes from
           focusable = true,
         },
         signs = true,
         underline = true,
       })
 
-      -- Capacidades de nvim-cmp para TODOS los servidores (resolución de
-      -- documentación y de ediciones adicionales al confirmar un ítem).
+      -- nvim-cmp capabilities for ALL servers (resolving
+      -- documentation and additional edits when confirming an item).
       vim.lsp.config("*", { capabilities = capabilities })
 
-      -- vtsls: solo el tipo de retorno de las funciones como inlay hint.
+      -- vtsls: only the functions' return type as an inlay hint.
       local ts_inlay_hints = {
         parameterNames = { enabled = "none" },
         variableTypes = { enabled = false },
@@ -82,10 +82,10 @@ return {
         },
       })
 
-      -- lua_ls con la API de Neovim (`vim.*`, LuaJIT), solo en carpetas que son
-      -- una config o un plugin de Neovim y no traen su propio .luarc. Sin esto,
-      -- cada archivo de esta config mostraba `vim` como global indefinida.
-      -- Receta de la documentación de nvim-lspconfig (lsp/lua_ls.lua).
+      -- lua_ls with the Neovim API (`vim.*`, LuaJIT), only in folders that are
+      -- a Neovim config or plugin and do not ship their own .luarc. Without this,
+      -- every file in this config showed `vim` as an undefined global.
+      -- Recipe from the nvim-lspconfig documentation (lsp/lua_ls.lua).
       vim.lsp.config("lua_ls", {
         on_init = function(client)
           local folder = client.workspace_folders and client.workspace_folders[1]
@@ -103,13 +103,13 @@ return {
         settings = { Lua = {} },
       })
 
-      -- Activar servidores
+      -- Enable servers
       vim.lsp.enable("vtsls")
       vim.lsp.enable("eslint")
       vim.lsp.enable("tailwindcss")
       vim.lsp.enable("lua_ls")
 
-      -- Atajos manuales y Toggle
+      -- Manual keymaps and Toggle
       vim.api.nvim_create_autocmd("LspAttach", {
         group = vim.api.nvim_create_augroup("UserLspAttach", { clear = true }),
         callback = function(args)
@@ -128,7 +128,7 @@ return {
           map("gd", vim.lsp.buf.definition, "LSP: go to definition")
           map("<leader>ca", vim.lsp.buf.code_action, "LSP: code action")
 
-          -- Toggle para Inlay Hints (Espacio + t + h)
+          -- Toggle for Inlay Hints (Space + t + h)
           map("<leader>th", function()
             local current_state = vim.lsp.inlay_hint.is_enabled({ bufnr = bufnr })
             vim.lsp.inlay_hint.enable(not current_state, { bufnr = bufnr })

@@ -1,12 +1,12 @@
 return {
   {
-    -- Se carga con neo-tree (que arranca al inicio) o con el primer require.
+    -- Loaded with neo-tree (which starts at startup) or on the first require.
     "nvim-tree/nvim-web-devicons",
     lazy = true,
     opts = {
-      default = true, -- icono genérico para archivos sin icono propio
-      -- Busca por nombre de archivo y después por extensión: un archivo sin
-      -- extensión no recibe un icono solo porque su nombre coincide con una.
+      default = true, -- generic icon for files without their own icon
+      -- Looks up by file name and then by extension: a file without an
+      -- extension does not get an icon just because its name matches one.
       strict = true,
     },
   },

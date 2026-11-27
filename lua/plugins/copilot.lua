@@ -1,19 +1,19 @@
 return {
   {
     "github/copilot.vim",
-    -- Carga al abrir cualquier archivo (no recién al entrar en insert), para que
-    -- la sugerencia ya esté lista la primera vez que escribes.
+    -- Loads when opening any file (not only on entering insert), so that
+    -- the suggestion is already ready the first time you type.
     event = { "BufReadPost", "BufNewFile" },
-    -- Las variables van en `init` (ANTES de cargar el plugin): `plugin/copilot.vim`
-    -- mapea <Tab> en el momento de cargarse si `copilot_no_tab_map` todavía no
-    -- existe. Definirlas en `config` llegaba tarde y dejaba ese <Tab> global.
+    -- The variables go in `init` (BEFORE the plugin loads): `plugin/copilot.vim`
+    -- maps <Tab> at load time if `copilot_no_tab_map` does not exist yet.
+    -- Defining them in `config` was too late and left that <Tab> mapped globally.
     init = function()
       vim.g.copilot_no_tab_map = true
       vim.g.copilot_assume_mapped = true
-      vim.g.copilot_enabled = 1 -- siempre encendido
-      -- Copilot manda a GitHub el texto de cada buffer abierto. Los archivos
-      -- de secretos no salen del equipo: `.env` por filetype (conserva los
-      -- defaults de copilot para el resto) y llaves/credenciales por nombre.
+      vim.g.copilot_enabled = 1 -- always on
+      -- Copilot sends the text of every open buffer to GitHub. Secret files
+      -- do not leave the machine: `.env` by filetype (keeps copilot's
+      -- defaults for the rest) and keys/credentials by name.
       vim.g.copilot_filetypes = { env = false, dotenv = false }
       vim.api.nvim_create_autocmd({ "BufReadPre", "BufNewFile" }, {
         group = vim.api.nvim_create_augroup("UserCopilotSecrets", { clear = true }),
@@ -23,7 +23,7 @@ return {
       })
     end,
     config = function()
-      -- Aceptar sugerencia con Ctrl + j
+      -- Accept suggestion with Ctrl + j
       vim.keymap.set("i", "<C-j>", 'copilot#Accept("\\<CR>")', {
         expr = true,
         replace_keycodes = false,

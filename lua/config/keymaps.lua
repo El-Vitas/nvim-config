@@ -1,20 +1,20 @@
--- Floating cheatsheet (<leader>?): todos los atajos que vale la pena recordar,
--- incluidos los que NO surfacean por which-key (árbol, ventanas, tabs, review).
+-- Floating cheatsheet (<leader>?): all the shortcuts worth remembering,
+-- including the ones that do NOT surface through which-key (tree, windows, tabs, review).
 --
--- Está partido en tres bloques según CÓMO se escribe el atajo:
---   • LEADER  → <leader> y después las teclas que figuran (`rc`, `ff`, …).
---   • DIRECT  → la tecla tal cual, sin <leader> (`]r`, `K`, `gt`, `<C-h>`).
---   • PANELS  → solo funcionan con el foco dentro de esa ventana.
+-- It is split into three blocks according to HOW the shortcut is typed:
+--   • LEADER  → <leader> followed by the listed keys (`rc`, `ff`, …).
+--   • DIRECT  → the key as is, without <leader> (`]r`, `K`, `gt`, `<C-h>`).
+--   • PANELS  → only work with focus inside that window.
 --
--- UX: la columna de teclas es el ancla de escaneo (va coloreada y siempre
--- alineada); los títulos y las reglas dan la jerarquía; y la forma de salir
--- (`q` / `Esc`) vive en el BORDE, no en una línea del contenido, para que siga
--- visible aunque el cheatsheet scrollee.
+-- UX: the key column is the scanning anchor (colored and always
+-- aligned); titles and rules give the hierarchy; and the way out
+-- (`q` / `Esc`) lives on the BORDER, not in a content line, so it stays
+-- visible even when the cheatsheet scrolls.
 
-local DESCW = 34 -- ancho de referencia de la descripción
-local GAP = 2    -- separación mínima entre teclas y descripción
+local DESCW = 34 -- reference width of the description
+local GAP = 2    -- minimum gap between keys and description
 
--- { título, { {teclas, qué hace}, … } }
+-- { title, { {keys, what it does}, … } }
 local GROUPS = {
   {
     banner = "LEADER — <leader> then the key",
@@ -118,8 +118,8 @@ local GROUPS = {
   },
 }
 
--- Atajos que SOLO existen dentro de ese panel. Van a lo ancho porque describen
--- varias teclas por línea.
+-- Shortcuts that ONLY exist inside that panel. They run full width because they describe
+-- several keys per line.
 local PANELS = {
   { "neo-tree", "? help · H hidden · z / Z collapse / expand all · O system app" },
   { "binary file", "prompt on open: system app / raw bytes  ·  :OpenDoctor" },
@@ -130,16 +130,16 @@ local PANELS = {
   { "base modal", "Enter pick · f this-branch ↔ global · + more · q cancel" },
 }
 
--- Colores: mismos tokens que lualine/neo-tree para que se sienta parte del tema.
--- `default = true` → si tú defines el grupo, el tuyo gana. Se re-aplican en cada
--- apertura porque un cambio de colorscheme limpia los grupos.
+-- Colors: same tokens as lualine/neo-tree so it feels part of the theme.
+-- `default = true` → if you define the group yourself, yours wins. They are re-applied on every
+-- open because a colorscheme change clears the groups.
 local function set_highlights()
   local p = require("config.palette")
   local hl = {
-    CheatBanner = { fg = p.purple, bold = true },  -- morado: separador de bloque
-    CheatSection = { fg = p.gold, bold = true },   -- dorado: título de sección
-    CheatKey = { fg = p.green_bright },            -- verde: la tecla (ancla de escaneo)
-    CheatPanel = { fg = p.blue },                  -- azul: nombre del panel
+    CheatBanner = { fg = p.purple, bold = true },  -- purple: block separator
+    CheatSection = { fg = p.gold, bold = true },   -- gold: section title
+    CheatKey = { fg = p.green_bright },            -- green: the key (scanning anchor)
+    CheatPanel = { fg = p.blue },                  -- blue: panel name
   }
   for name, opts in pairs(hl) do
     opts.default = true
@@ -149,15 +149,15 @@ end
 
 local function dw(s) return vim.fn.strdisplaywidth(s) end
 
--- Padding por ANCHO DE PANTALLA (hay glifos multibyte: ·, ↔, …). Garantiza al
--- menos un espacio: si el texto ya llena la columna, igual empuja uno (si no,
--- teclas largas como `<C-w>h  <C-w>l` se pegan a la descripción).
+-- Padding by DISPLAY WIDTH (there are multibyte glyphs: ·, ↔, …). It guarantees at
+-- least one space: if the text already fills the column, it still pushes one (otherwise,
+-- long keys like `<C-w>h  <C-w>l` stick to the description).
 local function pad(s, w)
   return s .. string.rep(" ", math.max(1, w - dw(s)))
 end
 
--- Una línea renderizada + sus tramos de color. OJO: los tramos van en BYTES
--- (que es lo que toman los extmarks), el padding en ANCHO DE PANTALLA.
+-- A rendered line + its color spans. NOTE: the spans are in BYTES
+-- (which is what extmarks take), the padding in DISPLAY WIDTH.
 local function E(text, spans) return { text = text, spans = spans or {} } end
 
 local function row(key, desc, kw, key_hl)
@@ -170,13 +170,13 @@ local function heading(text, hl)
   return E(text, { { 0, #text, hl } })
 end
 
--- Separador de bloque: "── TÍTULO ─────…", del mismo largo para todos.
+-- Block separator: "── TITLE ─────…", the same length for all of them.
 local function banner(text, total_w)
   return heading("── " .. text .. " " .. string.rep("─", math.max(0, total_w - dw(text) - 5)), "CheatBanner")
 end
 
--- Ancho de la columna de teclas y de la columna entera, medidos del CONTENIDO
--- del grupo (así el bloque leader queda angosto y el de teclas directas ancho).
+-- Width of the key column and of the whole column, measured from the group's
+-- CONTENT (so the leader block ends up narrow and the direct-keys one wide).
 local function metrics(sections)
   local kw, w = 0, 0
   for _, s in ipairs(sections) do
@@ -197,8 +197,8 @@ local function render(sections, kw)
   return out
 end
 
--- Reparte las secciones en dos columnas equilibradas por ALTURA, respetando el
--- orden: se llena la izquierda hasta pasar la mitad, el resto va a la derecha.
+-- Splits the sections into two columns balanced by HEIGHT, keeping the
+-- order: the left one is filled past the halfway point, the rest goes to the right.
 local function split_sections(sections)
   local total = 0
   for _, s in ipairs(sections) do total = total + #s[2] + 2 end
@@ -214,12 +214,12 @@ local function split_sections(sections)
   return left, right
 end
 
--- Pega la columna derecha a la izquierda, corriendo sus tramos de color por el
--- offset en bytes de la izquierda ya rellenada.
+-- Attaches the right column to the left one, shifting its color spans by the
+-- byte offset of the already padded left side.
 local function join(a, b, colw)
   a = a or E("")
   b = b or E("")
-  if b.text == "" then return a end -- sin derecha no rellenamos: evita colas de espacios
+  if b.text == "" then return a end -- without a right side we do not pad: avoids trailing spaces
   local left = pad(a.text, colw)
   local off = #left
   local spans = {}
@@ -229,7 +229,7 @@ local function join(a, b, colw)
 end
 
 local function build()
-  -- Ancho de la columna más ancha entre los grupos → decide 1 o 2 columnas.
+  -- Width of the widest column among the groups → decides 1 or 2 columns.
   local colw = 0
   for _, g in ipairs(GROUPS) do
     local _, w = metrics(g.sections)
@@ -280,7 +280,7 @@ local function cheatsheet()
   end
 
   local w = math.min(widest + 2, vim.o.columns - 4)
-  -- Alto: el contenido, pero nunca más que la pantalla (si no entra, scrollea).
+  -- Height: the content, but never more than the screen (if it does not fit, it scrolls).
   local h = math.min(#lines, vim.o.lines - 6)
   local scrolls = h < #lines
 
@@ -304,15 +304,15 @@ local function cheatsheet()
     border = "rounded",
     title = " Cheatsheet ",
     title_pos = "center",
-    -- La salida SIEMPRE visible, aunque el contenido scrollee (Nielsen: control
-    -- y libertad del usuario — la salida no se esconde).
+    -- The exit is ALWAYS visible, even when the content scrolls (Nielsen: user control
+    -- and freedom — the exit is not hidden).
     footer = scrolls and " j k  scroll  ·  q  close " or "  q  close  ",
     footer_pos = "center",
   }
   local win = vim.api.nvim_open_win(buf, true, cfg)
 
   vim.wo[win].cursorline = true
-  -- Sin wrap: <leader>w puede dejar `wrap` global en on y partiría las columnas.
+  -- No wrap: <leader>w can leave global `wrap` on and it would break the columns.
   vim.wo[win].wrap = false
   for _, k in ipairs({ "q", "<Esc>" }) do
     vim.keymap.set("n", k, "<cmd>close<CR>", { buffer = buf, nowait = true, silent = true })
@@ -322,21 +322,21 @@ end
 vim.keymap.set("n", "<leader>?", cheatsheet, { desc = "Cheatsheet (shortcuts)" })
 
 -- Wrap toggle (<leader>w): flip soft-wrap and remember it globally in
--- `vim.g.review_wrap`, so new windows —including review's split view, que en
--- modo diff nace sin wrap— arrancan con esa preferencia. Aplica a todas las
--- ventanas del tab actual para que el cambio se vea al instante.
+-- `vim.g.review_wrap`, so new windows —including review's split view, which in
+-- diff mode is born without wrap— start with that preference. It applies to all
+-- windows of the current tab so the change shows up instantly.
 if vim.g.review_wrap == nil then vim.g.review_wrap = true end
 vim.keymap.set("n", "<leader>w", function()
   local on = not vim.wo.wrap
   vim.g.review_wrap = on
-  vim.opt.wrap = on -- default global para ventanas nuevas
+  vim.opt.wrap = on -- global default for new windows
   for _, w in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
     if vim.api.nvim_win_is_valid(w) then vim.wo[w].wrap = on end
   end
-  -- En markdown, `config.mdtable` apaga el wrap para dibujar la grilla y guarda
-  -- tu valor para restaurarlo después. Si no actualizamos ESE guardado, el
-  -- próximo re-render (editar, resize) restaura el valor viejo y tu <leader>w
-  -- se revierte solo. Acá le decimos cuál es la preferencia nueva.
+  -- In markdown, `config.mdtable` turns wrap off to draw the grid and saves
+  -- your value to restore it later. If we do not update THAT saved value, the
+  -- next re-render (edit, resize) restores the old value and your <leader>w
+  -- reverts by itself. Here we tell it what the new preference is.
   for _, b in ipairs(vim.api.nvim_list_bufs()) do
     if vim.api.nvim_buf_is_valid(b) and vim.b[b].mdtable_wrap ~= nil then
       vim.b[b].mdtable_wrap = on

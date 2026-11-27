@@ -1,8 +1,8 @@
 return {
   {
     "lewis6991/gitsigns.nvim",
-    -- Cambiamos el evento a "VeryLazy" para que cargue siempre
-    -- un poco después del arranque, sin bloquear el inicio.
+    -- We switch the event to "VeryLazy" so it always loads
+    -- a bit after startup, without blocking the start.
     event = "VeryLazy",
     opts = {
       signs = {
@@ -13,7 +13,7 @@ return {
         changedelete = { text = "~" },
         untracked    = { text = "┆" },
       },
-      -- Esto fuerza a que se adjunte a los buffers aunque no lo detecte al milisegundo
+      -- This forces it to attach to buffers even if it does not detect them right away
       auto_attach = true,
       attach_to_untracked = true,
       current_line_blame = true,
@@ -21,10 +21,10 @@ return {
     config = function(_, opts)
       require("gitsigns").setup(opts)
 
-      -- PARCHE: un archivo RENOMBRADO vs una base explícita (`change_base
-      -- <commit>`) se pintaba entero como agregado. Solo actúa cuando gitsigns
-      -- marcó `object_missing`: si el archivo es el destino de un rename, entrega
-      -- el blob del path viejo. Por qué y cuándo borrarlo: docs/decisions.md (D-16).
+      -- PATCH: a RENAMED file vs an explicit base (`change_base
+      -- <commit>`) was painted entirely as added. It only acts when gitsigns
+      -- flagged `object_missing`: if the file is the destination of a rename, it returns
+      -- the blob of the old path. Why and when to remove it: docs/decisions.md (D-16).
       local Repo = require("gitsigns.git.repo")
       if type(Repo.file_info) ~= "function" then
         vim.notify("gitsigns: Repo.file_info changed, rename patch not applied (see docs/decisions.md D-16)",
@@ -35,7 +35,7 @@ return {
         local orig = Repo.file_info
         Repo.file_info = function(self, file, revision)
           local info, err = orig(self, file, revision)
-          -- Solo el hueco de upstream: base = commit real y base marcada ausente.
+          -- Only the upstream gap: base = real commit and base flagged as missing.
           if not info or not info.object_missing then return info, err end
           if not revision or revision == "" or vim.startswith(revision, ":") then
             return info, err
@@ -50,12 +50,12 @@ return {
             return require("review.core").git.rename_source(relpath, top, revision)
           end)
           if not (rok and old) then return info, err end
-          -- `self:command` corre dentro de la corrutina de gitsigns: no traba la UI.
+          -- `self:command` runs inside gitsigns' coroutine: it does not block the UI.
           local out, _, code = self:command({ "rev-parse", "--verify", "--quiet", revision .. ":" .. old },
             { ignore_error = true })
           if code ~= 0 or not out[1] or out[1] == "" then return info, err end
-          -- `relpath = old` replica lo que devuelve upstream cuando el rename SÍ
-          -- se resuelve (ls_tree del path viejo), para no divergir de su contrato.
+          -- `relpath = old` mirrors what upstream returns when the rename DOES
+          -- resolve (ls_tree of the old path), so as not to diverge from its contract.
           return {
             relpath = old,
             object_name = out[1],
@@ -64,12 +64,12 @@ return {
         end
       end
 
-      -- PARCHE: con una base explícita gitsigns corre `git blame <base>`, así que
-      -- toda línea cambiada después de la base sale como "Not Committed Yet"
-      -- aunque esté commiteada. La base es para COMPARAR (signos, vistas); el
-      -- blame tiene que decir quién escribió la línea. Si el archivo existe en
-      -- HEAD, se culpa contra HEAD; si no existe (nuevo de verdad), queda el
-      -- "Not Committed Yet" de gitsigns, que ahí es correcto. Ver D-20.
+      -- PATCH: with an explicit base gitsigns runs `git blame <base>`, so
+      -- every line changed after the base shows up as "Not Committed Yet"
+      -- even if it is committed. The base is for COMPARING (signs, views); the
+      -- blame has to say who wrote the line. If the file exists in
+      -- HEAD, blame runs against HEAD; if it does not exist (truly new), gitsigns'
+      -- "Not Committed Yet" stays, which is correct there. See D-20.
       local Blame = require("gitsigns.git.blame")
       if type(Blame.run_blame) ~= "function" then
         vim.notify("gitsigns: run_blame changed, blame-vs-HEAD patch not applied (see docs/decisions.md D-20)",
@@ -78,8 +78,8 @@ return {
       end
       local orig_blame = Blame.run_blame
       local gs_cache = require("gitsigns.cache").cache
-      -- Path actual del archivo. No sirve `obj.file`: en un renombrado gitsigns
-      -- lo arma con el path de la BASE (el que devuelve el parche de arriba).
+      -- Current path of the file. `obj.file` does not work: on a rename gitsigns
+      -- builds it with the BASE's path (the one the patch above returns).
       local function current_path(obj)
         for bufnr, entry in pairs(gs_cache) do
           if entry.git_obj == obj and vim.api.nvim_buf_is_valid(bufnr) then
@@ -103,12 +103,12 @@ return {
         return orig_blame(head_obj, contents, lnum, nil, blame_opts)
       end
 
-      -- `CacheEntry:get_blame` tiene un atajo: una línea dentro de un hunk se
-      -- marca "Not Committed Yet" sin correr git blame, porque con base HEAD un
-      -- hunk ES un cambio sin commitear. Con una base de commit no lo es (todo lo
-      -- cambiado desde la base es hunk), así que en ese caso se corre el blame
-      -- real (contra HEAD, por el parche de arriba): git mismo marca como no
-      -- commiteado lo que de verdad no lo está.
+      -- `CacheEntry:get_blame` has a shortcut: a line inside a hunk is
+      -- marked "Not Committed Yet" without running git blame, because with a HEAD base a
+      -- hunk IS an uncommitted change. With a commit base it is not (everything
+      -- changed since the base is a hunk), so in that case the real blame
+      -- is run (against HEAD, thanks to the patch above): git itself marks as not
+      -- committed only what truly is not.
       local CacheEntry = require("gitsigns.cache").CacheEntry
       if type(CacheEntry and CacheEntry.get_blame) ~= "function" then
         vim.notify("gitsigns: CacheEntry.get_blame changed, blame-vs-HEAD patch incomplete (see docs/decisions.md D-20)",

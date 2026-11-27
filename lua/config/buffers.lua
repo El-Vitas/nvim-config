@@ -1,8 +1,8 @@
--- Límite de buffers de archivo abiertos, tipo COLA (máx 5): al abrir uno nuevo,
--- si se pasa del máximo, cierra el más viejo (LRU). Nunca cierra buffers con
--- cambios sin guardar ni buffers visibles en un panel (solo ocultos antiguos).
+-- Limit on open file buffers, QUEUE-style (max 5): when opening a new one,
+-- if the maximum is exceeded, it closes the oldest (LRU). It never closes
+-- buffers with unsaved changes nor buffers visible in a panel (only old hidden ones).
 local MAX = 5
-local order = {} -- bufnr en orden de uso; el más reciente al final
+local order = {} -- bufnr in order of use; the most recent last
 
 local function is_file_buf(b)
   return vim.api.nvim_buf_is_valid(b)
@@ -13,7 +13,7 @@ end
 
 local function touch(b)
   if not is_file_buf(b) then return end
-  -- Reconstruir el orden con solo buffers vivos y poner `b` al final (más reciente).
+  -- Rebuild the order with only live buffers and put `b` last (most recent).
   local live = {}
   for _, x in ipairs(order) do
     if x ~= b and is_file_buf(x) then live[#live + 1] = x end
@@ -21,24 +21,24 @@ local function touch(b)
   live[#live + 1] = b
   order = live
 
-  -- Evictar los más viejos mientras nos pasemos del máximo.
+  -- Evict the oldest ones while we are over the maximum.
   while #order > MAX do
     local removed = false
     for i = 1, #order do
       local cand = order[i]
-      -- Candidato a cerrar: viejo, no el actual, sin cambios y no visible.
+      -- Candidate to close: old, not the current one, unmodified and not visible.
       if cand ~= b and not vim.bo[cand].modified and #vim.fn.win_findbuf(cand) == 0 then
         table.remove(order, i)
-        -- `:bdelete` (no `nvim_buf_delete`, que equivale a :bwipeout): el buffer
-        -- sale de la lista y se descarga, pero conserva su número, así que la
-        -- quickfix (lista de cambios de review), las marcas y el jumplist
-        -- siguen apuntando al archivo.
+        -- `:bdelete` (not `nvim_buf_delete`, which is equivalent to :bwipeout): the buffer
+        -- leaves the list and is unloaded, but keeps its number, so the
+        -- quickfix list (review's change list), the marks and the jumplist
+        -- keep pointing at the file.
         pcall(vim.cmd, "bdelete " .. cand)
         removed = true
         break
       end
     end
-    if not removed then break end -- lo que queda está modificado o visible: no forzar
+    if not removed then break end -- what remains is modified or visible: do not force
   end
 end
 

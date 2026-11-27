@@ -1,24 +1,24 @@
--- Paleta alineada a pi (vitas.json): morado, dorado y verde potente. Los colores
--- compartidos vienen de config.palette; los fondos de la barra son solo de acá.
+-- Palette aligned with pi (vitas.json): purple, gold and vivid green. The shared
+-- colors come from config.palette; the bar backgrounds are only defined here.
 local p = require("config.palette")
 local c = {
   purple = p.purple,
   gold   = p.gold,
-  green  = p.green_bright, -- verde potente
-  blue   = p.blue, -- indicador "md split"
+  green  = p.green_bright, -- vivid green
+  blue   = p.blue, -- "md split" indicator
   fg     = p.fg,
   mid    = "#363a4f",
   dark   = "#181926",
 }
 
--- Theme propio de lualine. El modo va morado en TODOS los modos (el texto ya
--- dice el modo), la rama/diff en dorado, y la posición en verde (override abajo).
+-- Custom lualine theme. The mode is purple in ALL modes (the text already
+-- says the mode), the branch/diff in gold, and the position in green (override below).
 local mode_hl = { fg = c.dark, bg = c.purple, gui = "bold" }
 local theme = {
   normal = {
     a = mode_hl,
     b = { fg = c.gold, bg = c.mid },
-    c = { fg = c.fg, bg = "#1e2030" }, -- fondo sutil (para que se dibujen las flechas)
+    c = { fg = c.fg, bg = "#1e2030" }, -- subtle background (so the arrows get drawn)
   },
   insert = { a = mode_hl },
   visual = { a = mode_hl },
@@ -33,18 +33,18 @@ local theme = {
 
 local dim = p.dim
 
--- ── Indicadores de estado ─────────────────────────────────────────────────────
--- Cada uno devuelve texto + color en UNA función, y los wrappers de lualine la
--- llaman dos veces (una para el texto, otra para el color). Es barato: son
--- lookups de tabla. Todo va con pcall: un plugin roto no debe tumbar el
--- statusline entero.
+-- ── State indicators ──────────────────────────────────────────────────────────
+-- Each one returns text + color in ONE function, and lualine's wrappers call it
+-- twice (once for the text, once for the color). It is cheap: they are
+-- table lookups. Everything goes through pcall: a broken plugin must not take down the
+-- whole statusline.
 
--- ── Iconos ────────────────────────────────────────────────────────────────────
--- Elegidos POR NOMBRE en `glyphnames.json` de nerd-fonts, no por codepoint a
--- ojo: así se eligió una vez un `md-content_cut` (tijeras) como icono de "off".
--- Cada uno lleva su nombre al lado; para cambiarlos, busca el nombre en
--- https://www.nerdfonts.com/cheat-sheet y reemplaza el par (glifo, comentario).
--- Verificados presentes en CaskaydiaCove Nerd Font con:
+-- ── Icons ─────────────────────────────────────────────────────────────────────
+-- Chosen BY NAME in nerd-fonts' `glyphnames.json`, not by eyeballing the codepoint:
+-- that is how a `md-content_cut` (scissors) was once picked as the "off" icon.
+-- Each one carries its name next to it; to change them, look up the name at
+-- https://www.nerdfonts.com/cheat-sheet and replace the pair (glyph, comment).
+-- Verified present in CaskaydiaCove Nerd Font with:
 --   fc-list ":charset=<codepoint>" family | grep -i caskaydia
 local I = {
   markdown = "󰍔", -- md-language_markdown  U+F0354
@@ -56,16 +56,16 @@ local I = {
   eye_off  = "󰈉", -- md-eye_off            U+F0209
 }
 
---- Modo markdown. Solo aparece en buffers markdown; en el resto no es info.
---- md split = preview en dos paneles · md = renderizado · raw = markdown crudo
+--- Markdown mode. Only shown in markdown buffers; elsewhere it is not information.
+--- md split = two-pane preview · md = rendered · raw = raw markdown
 local function md_state()
   if vim.bo.filetype ~= "markdown" then return nil end
   local buf = vim.api.nvim_get_current_buf()
 
-  -- Preview dividido: vale tanto si estás parado en el panel del preview como en
-  -- el archivo fuente que lo abrió. Va PRIMERO porque el preview apaga el render
-  -- del fuente (lo dibuja en el otro panel), y sin este chequeo el fuente diría
-  -- "raw", que es engañoso.
+  -- Split preview: applies both when you are in the preview pane and in
+  -- the source file that opened it. It goes FIRST because the preview turns off the source's
+  -- render (it draws it in the other pane), and without this check the source would say
+  -- "raw", which is misleading.
   local ok_p, preview = pcall(require, "config.mdpreview")
   if ok_p and preview.active(buf) then return I.split .. " md split", c.blue end
 
@@ -78,9 +78,9 @@ local function md_state()
   return I.markdown .. " raw", dim
 end
 
---- Vista de review (modo GLOBAL: aplica a todos los archivos). Se nombra `rv`
---- igual que el comando `:Rv`, para que la etiqueta y el comando coincidan.
---- off = buffer plano · inline = diff unificado · split = dos columnas
+--- Review view (GLOBAL mode: applies to all files). It is named `rv`
+--- like the `:Rv` command, so the label and the command match.
+--- off = plain buffer · inline = unified diff · split = two columns
 local function review_view()
   local ok, views = pcall(require, "review.features.views")
   if not ok or type(views.mode) ~= "string" then return nil end
@@ -89,12 +89,12 @@ local function review_view()
   return I.plain .. " view: off", dim
 end
 
---- Archivos ignorados por git. Se escribe `ignored: shown` / `ignored: hidden`
---- (etiqueta + estado) porque un "hidden on/off" es ambiguo: no se sabe si lo
---- apagado es el ocultar o los archivos. Acá el sujeto es qué son (`ignored`) y
---- el valor es qué les pasa (`shown`/`hidden`).
---- El estado NOTORIO es `shown`, porque es el que cambia lo que ves en el árbol
---- y en los pickers; oculto va tenue.
+--- Files ignored by git. It is written as `ignored: shown` / `ignored: hidden`
+--- (label + state) because a "hidden on/off" is ambiguous: it is unclear whether what
+--- is turned off is the hiding or the files. Here the subject is what they are (`ignored`) and
+--- the value is what happens to them (`shown`/`hidden`).
+--- The NOTICEABLE state is `shown`, because it is the one that changes what you see in the tree
+--- and in the pickers; hidden is dimmed.
 local function hidden_state()
   local ok, h = pcall(require, "config.hidden")
   if not ok then return nil end
@@ -102,7 +102,7 @@ local function hidden_state()
   return I.eye_off .. " ignored: hidden", dim
 end
 
---- Envuelve un `state_fn` como componente de lualine.
+--- Wraps a `state_fn` as a lualine component.
 local function indicator(state_fn)
   return {
     function()
@@ -124,7 +124,7 @@ return {
     options = {
       theme = theme,
       globalstatus = true,
-      -- Flechas powerline para darle forma/personalidad.
+      -- Powerline arrows to give it shape/personality.
       section_separators = { left = "", right = "" },
       component_separators = { left = "", right = "" },
     },
@@ -134,8 +134,8 @@ return {
         "branch",
         {
           "diff",
-          -- Leer del dict de gitsigns → SIEMPRE en sync con los signos de la
-          -- columna (que reflejan la base de review vía change_base).
+          -- Read from gitsigns' dict → ALWAYS in sync with the signs in the
+          -- column (which reflect review's base via change_base).
           source = function()
             local gs = vim.b.gitsigns_status_dict
             if gs then
@@ -143,7 +143,7 @@ return {
             end
           end,
           symbols = { added = "N ", modified = "M ", removed = "D " },
-          -- Misma paleta que neo-tree/scrollbar/gitsigns.
+          -- Same palette as neo-tree/scrollbar/gitsigns.
           diff_color = {
             added = { fg = p.green },
             modified = { fg = p.orange },
@@ -153,7 +153,7 @@ return {
       },
       lualine_c = {
         { "filename", path = 1, symbols = { modified = " ●", readonly = " ", newfile = " " } },
-        -- Base de comparación de review (solo si no es HEAD). Morado.
+        -- Review comparison base (only if it is not HEAD). Purple.
         {
           function()
             local ok, core = pcall(require, "review.core")
@@ -161,7 +161,7 @@ return {
             local b = core.git and core.git.base_ref
             if not b or b == "HEAD" then return "" end
             if b == ":" then return "  index" end
-            -- Preferir la descripción (subject) del commit base; si no hay, el hash.
+            -- Prefer the base commit's description (subject); if there is none, the hash.
             local label = core.git.base_label
             if label and label ~= "" then
               if #label > 32 then label = label:sub(1, 31) .. "…" end
@@ -173,13 +173,13 @@ return {
         },
       },
       lualine_x = {
-        -- Indicadores de estado, en orden: markdown (solo en .md) · vista de
-        -- review · archivos ocultos · agente. Juntos porque los cuatro responden
-        -- a "¿en qué modo estoy?", que es una sola pregunta del usuario.
+        -- State indicators, in order: markdown (only in .md) · review
+        -- view · hidden files · agent. Together because all four answer
+        -- "what mode am I in?", which is a single user question.
         indicator(md_state),
         indicator(review_view),
         indicator(hidden_state),
-        -- Estado del agente de review: verde "󰚩 agent" si está ON; gris tenue si OFF.
+        -- Review agent state: green "󰚩 agent" if ON; dim gray if OFF.
         {
           function()
             local ok, agent = pcall(require, "review.features.agent")
@@ -189,14 +189,14 @@ return {
           color = function()
             local ok, agent = pcall(require, "review.features.agent")
             if ok and agent._on then return { fg = c.green, gui = "bold" } end
-            return { fg = dim } -- tenue cuando está apagado
+            return { fg = dim } -- dim when it is off
           end,
         },
         { "diagnostics", sources = { "nvim_lsp" }, symbols = { error = " ", warn = " ", info = " ", hint = " " } },
         "filetype",
       },
       lualine_y = {},
-      -- Posición en VERDE potente.
+      -- Position in vivid GREEN.
       lualine_z = {
         { "location", color = { fg = c.dark, bg = c.green, gui = "bold" }, padding = { left = 1, right = 1 } },
       },

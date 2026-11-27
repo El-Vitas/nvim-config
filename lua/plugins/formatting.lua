@@ -15,11 +15,11 @@ return {
     },
   },
   {
-    -- Fijado a v1: el 2026-11-16 `main` pasa a v2, que rechaza las opciones de
-    -- v1 y la API de handlers que usa review-mode para sus marcas. Migrar es
-    -- una tarea aparte (ver docs/decisions.md, D-12).
+    -- Pinned to v1: on 2026-11-16 `main` moves to v2, which rejects the v1
+    -- options and the handlers API that review-mode uses for its marks. Migrating is
+    -- a separate task (see docs/decisions.md, D-12).
     "petertriho/nvim-scrollbar",
     branch = "v1",
-    opts = {}, -- defaults: cursor y diagnósticos (las marcas de cambios las pone review-mode)
+    opts = {}, -- defaults: cursor and diagnostics (review-mode adds the change marks)
   },
 }

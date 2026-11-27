@@ -1,33 +1,33 @@
--- Tablas markdown como GRILLA de verdad.
+-- Markdown tables as a real GRID.
 --
--- ── El problema ───────────────────────────────────────────────────────────────
--- render-markdown (y cualquier renderer atado a la grilla de caracteres) dibuja
--- UNA línea de pantalla por línea de buffer. Una fila de tabla es una línea. Por
--- eso, si el contenido no entra:
---   • con wrap, la fila se derrama y los bordes de la continuación caen en
---     columnas arbitrarias → las líneas verticales se quiebran;
---   • sin wrap, la tabla se sale de pantalla.
--- Y por lo mismo tampoco puede meter un separador entre filas: sería una línea
--- que no existe en el archivo.
+-- ── The problem ───────────────────────────────────────────────────────────────
+-- render-markdown (and any renderer tied to the character grid) draws
+-- ONE screen line per buffer line. A table row is one line. So,
+-- if the content does not fit:
+--   • with wrap, the row spills over and the borders of the continuation land in
+--     arbitrary columns → the vertical lines break;
+--   • without wrap, the table runs off screen.
+-- And for the same reason it cannot insert a separator between rows either: it would be a line
+-- that does not exist in the file.
 --
--- ── La solución ───────────────────────────────────────────────────────────────
--- Maquetar por CELDA, no por línea, que es lo que hace VSCode / una tabla HTML:
---   • el ancho de cada columna es FIJO (calculado para entrar en la ventana);
---   • si el texto de una celda no entra, se parte DENTRO de su celda;
---   • la fila entera crece en alto y las demás celdas quedan con espacio vacío;
---   • en TODAS las líneas de esa fila los bordes están en la misma columna.
--- Las líneas extra se emiten como `virt_lines`, que es justamente lo que permite
--- dibujar más filas de pantalla que líneas de buffer — y de paso habilita el
--- separador horizontal entre filas.
+-- ── The solution ──────────────────────────────────────────────────────────────
+-- Lay out by CELL, not by line, which is what VSCode / an HTML table does:
+--   • the width of each column is FIXED (computed to fit the window);
+--   • if a cell's text does not fit, it wraps INSIDE its cell;
+--   • the whole row grows in height and the other cells are left with empty space;
+--   • on ALL the lines of that row the borders sit in the same column.
+-- The extra lines are emitted as `virt_lines`, which is precisely what allows
+-- drawing more screen rows than buffer lines — and incidentally enables the
+-- horizontal separator between rows.
 --
--- Mapeo: cada línea fuente conserva su lugar en el buffer. La primera línea de
--- cada bloque va como overlay y solo las continuaciones/separadores son virtuales.
+-- Mapping: each source line keeps its place in the buffer. The first line of
+-- each block goes as an overlay and only the continuations/separators are virtual.
 
 local M = {}
 
 local ns = vim.api.nvim_create_namespace("md_table_grid")
 
--- Bordes redondeados, para que combine con el resto del tema.
+-- Rounded borders, to match the rest of the theme.
 local B = {
   tl = "╭", tm = "┬", tr = "╮",
   ml = "├", mm = "┼", mr = "┤",
@@ -39,15 +39,15 @@ local HL_BORDER = "MdTableBorder"
 local HL_HEAD = "RenderMarkdownTableHead"
 local HL_ROW = "RenderMarkdownTableRow"
 
-local PAD = 1  -- espacios a cada lado del texto dentro de la celda
-local MIN = 8  -- ancho mínimo de texto por columna al encoger
+local PAD = 1  -- spaces on each side of the text inside the cell
+local MIN = 8  -- minimum text width per column when shrinking
 
 local function dw(s) return vim.fn.strdisplaywidth(s) end
 
--- ── Inline: sacar los marcadores y quedarse con el estilo ─────────────────────
--- El texto crudo de la celda trae `código`, **negrita**, *itálica*. Si lo
--- pintáramos tal cual se verían los backticks y asteriscos. Los sacamos y
--- marcamos el tramo con su highlight. El orden importa: ** antes que *.
+-- ── Inline: strip the markers and keep the style ──────────────────────────────
+-- The raw cell text carries `code`, **bold**, *italic*. If we
+-- painted it as is, the backticks and asterisks would show. We strip them and
+-- mark the span with its highlight. Order matters: ** before *.
 local INLINE = {
   { pat = "`([^`]+)`", hl = "RenderMarkdownCodeInline" },
   { pat = "%*%*([^*]+)%*%*", hl = "@markup.strong" },
@@ -55,8 +55,8 @@ local INLINE = {
   { pat = "%*([^*]+)%*", hl = "@markup.italic" },
 }
 
---- Parte el texto en tramos { texto, highlight }, sin los marcadores.
---- @return table[] tramos
+--- Splits the text into spans { text, highlight }, without the markers.
+--- @return table[] spans
 local function segments(text, base_hl)
   local out, pos = {}, 1
   while pos <= #text do
@@ -76,7 +76,7 @@ local function segments(text, base_hl)
   return out
 end
 
---- Tramos → palabras con su highlight (unidad de wrapping).
+--- Spans → words with their highlight (wrapping unit).
 local function tokenize(text, base_hl)
   local toks = {}
   for _, seg in ipairs(segments(text, base_hl)) do
@@ -87,8 +87,8 @@ local function tokenize(text, base_hl)
   return toks
 end
 
--- Corta una palabra más larga que la columna, por ANCHO DE PANTALLA (no bytes:
--- los acentos y los glifos anchos romperían la alineación).
+-- Cuts a word longer than the column, by DISPLAY WIDTH (not bytes:
+-- accents and wide glyphs would break the alignment).
 local function split_word(word, width)
   local parts, cur = {}, ""
   for ch in word:gmatch("[%z\1-\127\194-\244][\128-\191]*") do
@@ -103,8 +103,8 @@ local function split_word(word, width)
   return parts
 end
 
---- Envuelve tokens al ancho de la celda. Devuelve lista de líneas; cada línea es
---- una lista de chunks { texto, highlight }.
+--- Wraps tokens to the cell width. Returns a list of lines; each line is
+--- a list of chunks { text, highlight }.
 local function wrap(toks, width)
   local lines, cur, w = {}, {}, 0
   local function flush()
@@ -113,7 +113,7 @@ local function wrap(toks, width)
   end
   for _, t in ipairs(toks) do
     local word, hl = t[1], t[2]
-    if dw(word) > width then -- palabra más larga que la columna: partirla
+    if dw(word) > width then -- word longer than the column: split it
       flush()
       for _, piece in ipairs(split_word(word, width)) do
         lines[#lines + 1] = { { piece, hl } }
@@ -134,26 +134,26 @@ local function wrap(toks, width)
   return lines
 end
 
--- ── Anchos de columna ─────────────────────────────────────────────────────────
---- Reparte `avail` columnas de pantalla entre las columnas de la tabla.
---- Si el ancho natural entra, se respeta. Si no, se encoge proporcionalmente al
---- ancho natural (las columnas con más texto ceden más), con un piso por columna.
---- @param natural integer[] ancho natural del texto de cada columna
---- @param avail integer columnas de pantalla disponibles
---- @return integer[] anchos de TEXTO (sin contar padding ni bordes)
+-- ── Column widths ─────────────────────────────────────────────────────────────
+--- Distributes `avail` screen columns among the table's columns.
+--- If the natural width fits, it is respected. Otherwise it shrinks proportionally to
+--- the natural width (columns with more text give up more), with a floor per column.
+--- @param natural integer[] natural text width of each column
+--- @param avail integer available screen columns
+--- @return integer[] TEXT widths (not counting padding or borders)
 function M.layout(natural, avail)
   local n = #natural
   if n == 0 then return {} end
-  -- ancho total = bordes (n+1) + por columna (texto + 2*PAD)
+  -- total width = borders (n+1) + per column (text + 2*PAD)
   local fixed = (n + 1) + n * 2 * PAD
   local budget = avail - fixed
   local sum = 0
   for _, w in ipairs(natural) do sum = sum + w end
-  if budget >= sum then return vim.deepcopy(natural) end -- entra tal cual
+  if budget >= sum then return vim.deepcopy(natural) end -- fits as is
 
   local ws = {}
   if budget < n * MIN then
-    -- Ni el piso entra: repartir parejo lo que haya (nunca menos de 3).
+    -- Not even the floor fits: split what there is evenly (never less than 3).
     local each = math.max(3, math.floor(budget / n))
     for i = 1, n do ws[i] = each end
     return ws
@@ -163,8 +163,8 @@ function M.layout(natural, avail)
     ws[i] = math.max(MIN, math.floor(natural[i] / sum * budget))
     used = used + ws[i]
   end
-  -- Ajuste por redondeo: sacar (o dar) a la columna más ancha, que es la que
-  -- menos sufre el cambio.
+  -- Rounding adjustment: take from (or give to) the widest column, which is the one
+  -- that suffers the change least.
   local diff = budget - used
   while diff ~= 0 do
     local idx, best = 1, -1
@@ -175,7 +175,7 @@ function M.layout(natural, avail)
       ws[idx] = ws[idx] + 1
       diff = diff - 1
     else
-      if ws[idx] <= MIN then break end -- no bajar del piso
+      if ws[idx] <= MIN then break end -- do not go below the floor
       ws[idx] = ws[idx] - 1
       diff = diff + 1
     end
@@ -183,7 +183,7 @@ function M.layout(natural, avail)
   return ws
 end
 
--- ── Construcción de las líneas de la grilla ───────────────────────────────────
+-- ── Building the grid lines ───────────────────────────────────────────────────
 local function pad_to(chunks, width, align)
   local w = 0
   for _, c in ipairs(chunks) do w = w + dw(c[1]) end
@@ -204,16 +204,16 @@ local function pad_to(chunks, width, align)
   return out
 end
 
---- Línea horizontal (borde superior, separador o borde inferior).
+--- Horizontal line (top border, separator or bottom border).
 local function rule(left, mid, right, widths)
   local parts = {}
   for i, w in ipairs(widths) do parts[i] = string.rep(B.h, w + 2 * PAD) end
   return { { left .. table.concat(parts, mid) .. right, HL_BORDER } }
 end
 
---- Todas las líneas de pantalla de UNA fila. La altura es el máximo de líneas
---- entre sus celdas; las celdas más cortas se rellenan con vacío.
---- @return table[][] lista de líneas, cada una lista de chunks
+--- All the screen lines of ONE row. The height is the maximum number of lines
+--- among its cells; the shorter cells are padded with blanks.
+--- @return table[][] list of lines, each one a list of chunks
 function M.row_lines(cells, widths, aligns, hl)
   local per_cell, height = {}, 1
   for i = 1, #widths do
@@ -237,7 +237,7 @@ function M.row_lines(cells, widths, aligns, hl)
   return lines
 end
 
--- ── Parseo de la tabla (treesitter) ───────────────────────────────────────────
+-- ── Table parsing (treesitter) ────────────────────────────────────────────────
 local function cell_texts(node, buf)
   local out = {}
   for child in node:iter_children() do
@@ -290,14 +290,14 @@ local function tables_in(buf)
   return out
 end
 
--- ── Dibujo ────────────────────────────────────────────────────────────────────
+-- ── Drawing ───────────────────────────────────────────────────────────────────
 local function width_for(win)
   local info = vim.fn.getwininfo(win)[1]
   if not info then return 80 end
   return math.max(24, info.width - (info.textoff or 0) - 1)
 end
 
---- Dibuja una línea fuente como una línea de grilla y conserva su altura real.
+--- Draws a source line as a grid line and keeps its real height.
 local function draw_source_line(buf, lnum, line, below)
   local raw = vim.api.nvim_buf_get_lines(buf, lnum, lnum + 1, false)[1] or ""
   local opts = {
@@ -354,16 +354,16 @@ function M.render(buf, win)
   M.clear(buf, win)
   if vim.bo[buf].filetype ~= "markdown" then return end
 
-  -- Sin tablas no hay grilla, y el wrap del usuario (<leader>w) queda como está.
+  -- Without tables there is no grid, and the user's wrap (<leader>w) stays as it is.
   local nodes = tables_in(buf)
   if #nodes == 0 then return end
 
-  -- Para que el conceal de rango haga efecto hace falta conceallevel >= 2. Y
-  -- sin `concealcursor`, la línea donde está el cursor se vuelve a dibujar: el
-  -- markdown crudo reaparecería EN MEDIO de la grilla y la partiría. Con "nc"
-  -- se mantiene oculta en normal y command; en insert limpiamos todo igual, así
-  -- que ahí sigues viendo (y editando) los pipes reales. La grilla se dibuja
-  -- desde la columna 0 de la ventana, así que con tablas el wrap se apaga.
+  -- For range conceal to take effect, conceallevel >= 2 is needed. And
+  -- without `concealcursor`, the line where the cursor is gets redrawn: the raw
+  -- markdown would reappear IN THE MIDDLE of the grid and break it. With "nc"
+  -- it stays hidden in normal and command mode; in insert we clear everything anyway, so
+  -- there you keep seeing (and editing) the real pipes. The grid is drawn
+  -- from column 0 of the window, so with tables wrap is turned off.
   pcall(function()
     if vim.wo[win].conceallevel < 2 then vim.wo[win][0].conceallevel = 2 end
     vim.wo[win][0].concealcursor = "nc"
@@ -376,7 +376,7 @@ function M.render(buf, win)
     local t = parse(buf, node)
     if t then
       local ncols = #t.header.cells
-      -- Ancho natural de cada columna = la celda más larga (ya sin marcadores).
+      -- Natural width of each column = the longest cell (already without markers).
       local natural = {}
       for i = 1, ncols do natural[i] = 0 end
       local function measure(cells)
@@ -397,20 +397,20 @@ function M.render(buf, win)
     end
   end
 
-  -- Las decoraciones virtuales pueden dejar una pantalla vieja durante un
-  -- resize/scroll; forzar el repintado también actualiza el statuscolumn.
+  -- Virtual decorations can leave a stale screen during a
+  -- resize/scroll; forcing the repaint also updates the statuscolumn.
   pcall(vim.api.nvim__redraw, { buf = buf, valid = false, statuscolumn = true })
 end
 
--- ── Enganche ──────────────────────────────────────────────────────────────────
--- Debounce: BufEnter/TextChanged/resize llegan en ráfagas y cada re-render borra
--- y reconstruye TODOS los extmarks de la tabla. Sin coalescer, esa ráfaga se ve
--- como parpadeo. 60 ms alcanza para agrupar sin que se sienta lento.
--- UN solo temporizador reutilizado: con `vim.defer_fn` + `stop()` quedaría un
--- handle abierto por cada ráfaga (docs/decisions.md, D-13).
+-- ── Hooks ─────────────────────────────────────────────────────────────────────
+-- Debounce: BufEnter/TextChanged/resize arrive in bursts and each re-render deletes
+-- and rebuilds ALL the table's extmarks. Without coalescing, that burst shows up
+-- as flicker. 60 ms is enough to group them without feeling slow.
+-- A SINGLE reused timer: with `vim.defer_fn` + `stop()` one handle would be left
+-- open per burst (docs/decisions.md, D-13).
 local timer = assert(vim.uv.new_timer())
 
---- ¿render-markdown está en modo crudo (`<leader>m`) para este buffer?
+--- Is render-markdown in raw mode (`<leader>m`) for this buffer?
 local function raw_mode(buf)
   local ok, enabled = pcall(function() return require("render-markdown.state").get(buf).enabled end)
   return ok and enabled == false
@@ -419,8 +419,8 @@ end
 local function refresh_now()
   local buf = vim.api.nvim_get_current_buf()
   if vim.bo[buf].filetype ~= "markdown" then return end
-  -- En insert y en modo crudo se ve el markdown real, igual que render-markdown,
-  -- para poder editar la tabla viendo los pipes.
+  -- In insert and in raw mode the real markdown is shown, just like render-markdown,
+  -- so the table can be edited while seeing the pipes.
   if vim.fn.mode():sub(1, 1) == "i" or raw_mode(buf) then
     M.clear(buf)
   else
@@ -432,8 +432,8 @@ local function refresh()
   timer:stop()
   timer:start(60, 0, vim.schedule_wrap(function() pcall(refresh_now) end))
 end
---- Redibuja la grilla del buffer actual (o la quita en modo crudo). Para quien
---- cambia un estado que no dispara eventos, como el toggle md ↔ raw.
+--- Redraws the current buffer's grid (or removes it in raw mode). For whoever
+--- changes a state that fires no events, like the md ↔ raw toggle.
 M.refresh = refresh
 
 function M.setup()
@@ -447,9 +447,9 @@ function M.setup()
     pattern = { "*.md", "*.markdown" },
     callback = function(a) M.clear(a.buf) end,
   })
-  -- Los eventos de resize NO matchean patrones de archivo (su <amatch> no es el
-  -- nombre del buffer), así que van sin patrón y se filtra adentro. Importa:
-  -- al abrir/cerrar el sidebar cambia el ancho y hay que recalcular la grilla.
+  -- Resize events do NOT match file patterns (their <amatch> is not the
+  -- buffer name), so they go without a pattern and are filtered inside. It matters:
+  -- opening/closing the sidebar changes the width and the grid must be recomputed.
   vim.api.nvim_create_autocmd({ "WinResized", "VimResized" }, {
     group = group,
     callback = refresh,

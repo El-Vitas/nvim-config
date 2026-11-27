@@ -1,28 +1,28 @@
--- Preview de markdown en dos columnas: el archivo crudo a la izquierda y el
--- renderizado a la derecha (<leader>M).
+-- Two-column markdown preview: the raw file on the left and the
+-- rendered one on the right (<leader>M).
 --
--- Reemplaza al preview de render-markdown, que solo copia el cursor del fuente
--- al preview: desplazarse sin mover el cursor, o moverse en el preview, dejaba
--- los paneles desalineados; cambiar de archivo dejaba un preview huérfano; y
--- convivía con el split de review en tres columnas. Ver docs/decisions.md (D-22).
+-- It replaces render-markdown's preview, which only copies the cursor from the source
+-- to the preview: scrolling without moving the cursor, or moving in the preview, left
+-- the panes misaligned; switching files left an orphaned preview; and it
+-- coexisted with review's split in three columns. See docs/decisions.md (D-22).
 --
--- Reglas: un solo preview a la vez; los dos paneles muestran la misma línea
--- arriba y el mismo cursor, se mueva el que se mueva; el preview sigue al
--- archivo de su ventana (otro markdown lo reemplaza, otro tipo lo cierra); y el
--- preview y el split de review se excluyen, gana el último que se pide.
+-- Rules: a single preview at a time; both panes show the same top line
+-- and the same cursor, whichever one moves; the preview follows the
+-- file in its window (another markdown replaces it, another type closes it); and the
+-- preview and review's split are mutually exclusive, the last one requested wins.
 local M = {}
 
 -- { src_win, src_buf, dst_win, dst_buf, was_enabled }
 M._s = nil
 
 local group = vim.api.nvim_create_augroup("MdPreview", { clear = true })
-local syncing = false -- evita el rebote: mover un panel dispara eventos en el otro
+local syncing = false -- avoids bouncing: moving one pane fires events in the other
 local review_hooked = false
 
 local function valid_win(w) return w and vim.api.nvim_win_is_valid(w) end
 local function valid_buf(b) return b and vim.api.nvim_buf_is_valid(b) end
 
---- ¿Está abierto el preview? Con `buf`, ¿ese buffer es su fuente o su panel?
+--- Is the preview open? With `buf`, is that buffer its source or its pane?
 function M.active(buf)
   local s = M._s
   if not s then return false end
@@ -30,7 +30,7 @@ function M.active(buf)
   return buf == s.src_buf or buf == s.dst_buf
 end
 
--- Render de render-markdown en `buf` (encendido o crudo con <leader>m).
+-- render-markdown render state in `buf` (on, or raw with <leader>m).
 local function rendered(buf)
   local ok, enabled = pcall(function() return require("render-markdown.state").get(buf).enabled end)
   return not ok or enabled ~= false
@@ -41,8 +41,8 @@ local function set_rendered(buf, enabled)
   pcall(vim.api.nvim_buf_call, buf, function() require("render-markdown").set_buf(enabled) end)
 end
 
--- Grilla de tablas de `buf` en `win`: dibujada si se ve renderizado, quitada si
--- se ve crudo. mdtable solo se entera solo de los eventos del buffer actual.
+-- Table grid of `buf` in `win`: drawn if it is shown rendered, removed if
+-- it is shown raw. mdtable only hears about the events of the current buffer.
 local function grid(buf, win, on)
   if not (valid_buf(buf) and valid_win(win)) then return end
   local mdtable = require("config.mdtable")
@@ -54,13 +54,13 @@ local function copy_lines(s)
   vim.bo[s.dst_buf].modifiable = true
   vim.api.nvim_buf_set_lines(s.dst_buf, 0, -1, false, lines)
   vim.bo[s.dst_buf].modifiable = false
-  -- render-markdown redibuja con los eventos del buffer, y el panel no los recibe
-  -- porque se edita desde otro lado.
+  -- render-markdown redraws on the buffer's events, and the pane does not receive them
+  -- because it is edited from elsewhere.
   pcall(vim.api.nvim_exec_autocmds, "TextChanged", { buffer = s.dst_buf, modeline = false })
   grid(s.dst_buf, s.dst_win, true)
 end
 
--- Lleva `to` a la misma línea de arriba y al mismo cursor que `from`.
+-- Brings `to` to the same top line and the same cursor as `from`.
 local function follow(from, to)
   if syncing or not (valid_win(from) and valid_win(to)) then return end
   local v = vim.api.nvim_win_call(from, vim.fn.winsaveview)
@@ -76,9 +76,9 @@ local function follow(from, to)
   syncing = false
 end
 
--- Cierra una ventana sin que Neovim recalcule un diff en medio del cierre (el
--- SIGSEGV de review-mode B19: con un diff en la pestaña, cerrar una ventana
--- vecina corre :diffupdate con la lista de ventanas a medio cambiar).
+-- Closes a window without Neovim recomputing a diff in the middle of the close (the
+-- SIGSEGV of review-mode B19: with a diff in the tab, closing a neighboring
+-- window runs :diffupdate with the window list half changed).
 local function close_win(win)
   if not valid_win(win) then return end
   local ei = vim.go.eventignore
@@ -87,7 +87,7 @@ local function close_win(win)
   vim.go.eventignore = ei
 end
 
--- ¿`win` es la única ventana normal de su pestaña (sin contar flotantes)?
+-- Is `win` the only normal window in its tab (not counting floating ones)?
 local function last_in_tab(win)
   for _, w in ipairs(vim.api.nvim_tabpage_list_wins(vim.api.nvim_win_get_tabpage(win))) do
     if w ~= win and vim.api.nvim_win_get_config(w).relative == "" then return false end
@@ -95,8 +95,8 @@ local function last_in_tab(win)
   return true
 end
 
---- Cierra el preview y devuelve el fuente al modo (md o raw) que tenía.
---- `src_closed`: se llama porque el usuario cerró la ventana del archivo.
+--- Closes the preview and returns the source to the mode (md or raw) it had.
+--- `src_closed`: called because the user closed the file's window.
 function M.close(src_closed)
   local s = M._s
   if not s then return end
@@ -104,8 +104,8 @@ function M.close(src_closed)
   vim.api.nvim_clear_autocmds({ group = group })
   set_rendered(s.src_buf, s.was_enabled)
   if src_closed and valid_win(s.dst_win) and last_in_tab(s.dst_win) then
-    -- El preview quedó solo: lo mismo que el autocierre de neo-tree, cerrar la
-    -- pestaña o, si es la última, Neovim.
+    -- The preview is left alone: same as neo-tree's auto-close, close the
+    -- tab or, if it is the last one, Neovim.
     if #vim.api.nvim_list_tabpages() > 1 then
       pcall(vim.api.nvim_win_close, s.dst_win, true)
     else
@@ -114,13 +114,13 @@ function M.close(src_closed)
     end
     return
   end
-  close_win(s.dst_win) -- el buffer del panel tiene bufhidden=wipe
+  close_win(s.dst_win) -- the pane's buffer has bufhidden=wipe
   if valid_win(s.src_win) and vim.api.nvim_win_get_buf(s.src_win) == s.src_buf then
     grid(s.src_buf, s.src_win, s.was_enabled)
   end
 end
 
--- Apunta el preview a `buf`, que se acaba de abrir en la ventana fuente.
+-- Points the preview at `buf`, which was just opened in the source window.
 local function retarget(s, buf)
   set_rendered(s.src_buf, s.was_enabled)
   s.src_buf = buf
@@ -152,9 +152,9 @@ local function attach(s)
       end
     end,
   })
-  -- WinScrolled cubre <C-e>, <C-d>, la rueda del mouse y los saltos que mueven
-  -- la vista. Qué panel se movió sale de `v:event` y no del foco: la rueda
-  -- desplaza la ventana que está bajo el mouse, aunque el foco esté en la otra.
+  -- WinScrolled covers <C-e>, <C-d>, the mouse wheel and the jumps that move
+  -- the view. Which pane moved comes from `v:event` and not from focus: the wheel
+  -- scrolls the window under the mouse, even if focus is on the other one.
   vim.api.nvim_create_autocmd("WinScrolled", {
     group = group,
     callback = function()
@@ -167,7 +167,7 @@ local function attach(s)
       end
     end,
   })
-  -- CursorMoved, los movimientos que no desplazan la vista.
+  -- CursorMoved, for the movements that do not scroll the view.
   vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI" }, {
     group = group,
     callback = function()
@@ -180,7 +180,7 @@ local function attach(s)
       end
     end,
   })
-  -- El preview sigue al archivo de su ventana.
+  -- The preview follows the file in its window.
   vim.api.nvim_create_autocmd("BufWinEnter", {
     group = group,
     callback = function(a)
@@ -192,19 +192,19 @@ local function attach(s)
       end
     end,
   })
-  -- Cerrar cualquiera de los dos paneles cierra el preview entero.
+  -- Closing either pane closes the whole preview.
   vim.api.nvim_create_autocmd("WinClosed", {
     group = group,
     callback = function(a)
       local w = tonumber(a.match)
       if M._s == s and (w == s.src_win or w == s.dst_win) then
-        -- Diferido: dentro de WinClosed no se pueden cerrar ventanas (E855).
+        -- Deferred: windows cannot be closed inside WinClosed (E855).
         local src_closed = w == s.src_win
         vim.schedule(function() M.close(src_closed) end)
       end
     end,
   })
-  -- Cambiar el ancho cambia la grilla de las tablas del panel.
+  -- Changing the width changes the grid of the pane's tables.
   vim.api.nvim_create_autocmd("WinResized", {
     group = group,
     callback = function()
@@ -215,7 +215,7 @@ local function attach(s)
   })
 end
 
---- Abre el preview del markdown de la ventana actual.
+--- Opens the preview of the current window's markdown.
 function M.open()
   local src_win = vim.api.nvim_get_current_win()
   local src_buf = vim.api.nvim_get_current_buf()
@@ -223,7 +223,7 @@ function M.open()
   M.close()
   hook_review()
 
-  -- El split de review también ocupa dos columnas: gana el último que se pide.
+  -- Review's split also takes two columns: the last one requested wins.
   local okv, views = pcall(require, "review.features.views")
   if okv and views.mode == "split" then
     views.set(require("review.core"), "normal")
@@ -235,17 +235,17 @@ function M.open()
   vim.bo[dst_buf].swapfile = false
   pcall(vim.api.nvim_buf_set_name, dst_buf, "preview://" .. vim.fn.fnamemodify(vim.api.nvim_buf_get_name(src_buf), ":t"))
   local dst_win = vim.api.nvim_open_win(dst_buf, false, { split = "right", win = src_win })
-  -- Que no se le puedan abrir archivos (el árbol o telescope usan otra ventana).
+  -- So that files cannot be opened in it (the tree or telescope use another window).
   vim.wo[dst_win][0].winfixbuf = true
-  vim.bo[dst_buf].filetype = "markdown" -- engancha render-markdown
-  -- El autocmd de treesitter de la config solo arranca en buffers de archivo; sin
-  -- esto, los bloques de código del panel salían sin colores.
+  vim.bo[dst_buf].filetype = "markdown" -- hooks in render-markdown
+  -- The config's treesitter autocmd only starts on file buffers; without
+  -- this, the code blocks in the pane came out without colors.
   pcall(vim.treesitter.start, dst_buf, "markdown")
 
   local s = { src_win = src_win, src_buf = src_buf, dst_win = dst_win, dst_buf = dst_buf,
     was_enabled = rendered(src_buf) }
   M._s = s
-  set_rendered(src_buf, false) -- el fuente se ve crudo; el render, a la derecha
+  set_rendered(src_buf, false) -- the source is shown raw; the render, on the right
   set_rendered(dst_buf, true)
   grid(src_buf, src_win, false)
   copy_lines(s)
@@ -253,7 +253,7 @@ function M.open()
   follow(src_win, dst_win)
 end
 
---- <leader>M: abre o cierra, desde cualquiera de los dos paneles.
+--- <leader>M: opens or closes, from either pane.
 function M.toggle()
   if M.active(vim.api.nvim_get_current_buf()) then
     M.close()
