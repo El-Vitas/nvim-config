@@ -1,10 +1,10 @@
--- Prueba del preview de markdown (<leader>M, lua/config/mdpreview.lua) con las
--- teclas reales y la config completa. Se corre con tests/run.sh, que arma un
--- repo temporal con doc.md (modificado contra HEAD), other.md y code.lua.
+-- Test of the markdown preview (<leader>M, lua/config/mdpreview.lua) with the
+-- real keys and the full config. Run it with tests/run.sh, which builds a
+-- temporary repo with doc.md (modified against HEAD), other.md and code.lua.
 --
--- Corre en una corrutina: cada espera vuelve al bucle principal, que es el que
--- procesa las teclas encoladas (vim.wait no lo hace) y dispara CursorMoved y
--- WinScrolled como cuando se teclea.
+-- It runs in a coroutine: every wait returns to the main loop, which is the one
+-- that processes queued keys (vim.wait does not) and fires CursorMoved and
+-- WinScrolled just as when typing.
 local co
 local function wait(ms)
   vim.defer_fn(function()
@@ -23,7 +23,7 @@ end
 
 local ok_n, fail_n, out = 0, 0, {}
 local function ck(cond, msg)
-  if cond then ok_n = ok_n + 1 else fail_n = fail_n + 1; out[#out + 1] = "FALLA " .. msg end
+  if cond then ok_n = ok_n + 1 else fail_n = fail_n + 1; out[#out + 1] = "FAIL " .. msg end
 end
 
 local function normal_wins()
@@ -54,7 +54,7 @@ local function desc()
   local r = {}
   for _, w in ipairs(normal_wins()) do
     local b = vim.api.nvim_win_get_buf(w)
-    r[#r + 1] = vim.api.nvim_buf_get_name(b):match("[^/]*$") .. "(top " .. top(w) .. ", línea " .. line(w)
+    r[#r + 1] = vim.api.nvim_buf_get_name(b):match("[^/]*$") .. "(top " .. top(w) .. ", line " .. line(w)
       .. (vim.wo[w].diff and ", diff" or "") .. ")"
   end
   return table.concat(r, " | ")
@@ -69,90 +69,90 @@ co = coroutine.create(function()
   local src = vim.api.nvim_get_current_buf()
   local grid_ns = vim.api.nvim_get_namespaces()["md_table_grid"]
 
-  -- ── Abrir ──
+  -- ── Open ──
   keys(" M")
   local pw, sw = preview_win(), file_win("doc.md")
-  ck(pw and sw and #normal_wins() == 2, "M1 abre dos columnas: " .. desc())
-  ck(not rendered(src), "M2 el fuente se ve crudo")
-  ck(vim.api.nvim_get_current_win() == sw, "M3 el foco sigue en el fuente")
-  ck(vim.treesitter.highlighter.active[vim.api.nvim_win_get_buf(pw)] ~= nil, "M4 el preview tiene resaltado de sintaxis")
+  ck(pw and sw and #normal_wins() == 2, "M1 opens two columns: " .. desc())
+  ck(not rendered(src), "M2 the source is shown raw")
+  ck(vim.api.nvim_get_current_win() == sw, "M3 focus stays on the source")
+  ck(vim.treesitter.highlighter.active[vim.api.nvim_win_get_buf(pw)] ~= nil, "M4 the preview has syntax highlighting")
   ck(grid_ns and #vim.api.nvim_buf_get_extmarks(vim.api.nvim_win_get_buf(pw), grid_ns, 0, -1, {}) > 0,
-    "M5 el preview dibuja las tablas")
+    "M5 the preview draws the tables")
 
-  -- ── Se mueven juntos, desde los dos lados ──
+  -- ── They move together, from both sides ──
   keys("<C-e><C-e><C-e><C-e><C-e>")
-  ck(top(pw) == top(sw) and top(sw) == 6, "M6 <C-e> en el fuente desplaza los dos: " .. desc())
+  ck(top(pw) == top(sw) and top(sw) == 6, "M6 <C-e> in the source scrolls both: " .. desc())
   keys("80G")
-  ck(line(pw) == 80 and top(pw) == top(sw), "M7 80G en el fuente mueve el preview: " .. desc())
+  ck(line(pw) == 80 and top(pw) == top(sw), "M7 80G in the source moves the preview: " .. desc())
   keys("<C-w>l")
-  ck(vim.api.nvim_get_current_win() == pw, "M8 el foco pasa al preview")
+  ck(vim.api.nvim_get_current_win() == pw, "M8 focus moves to the preview")
   keys("20G")
-  ck(line(sw) == 20 and top(sw) == top(pw), "M9 20G en el preview mueve el fuente: " .. desc())
+  ck(line(sw) == 20 and top(sw) == top(pw), "M9 20G in the preview moves the source: " .. desc())
   keys("<C-e><C-e><C-e>")
-  ck(top(sw) == top(pw), "M10 <C-e> en el preview desplaza los dos: " .. desc())
-  ck(not pcall(vim.cmd, "edit other.md") and preview_win() == pw, "M11 no se puede abrir un archivo en el preview")
+  ck(top(sw) == top(pw), "M10 <C-e> in the preview scrolls both: " .. desc())
+  ck(not pcall(vim.cmd, "edit other.md") and preview_win() == pw, "M11 a file cannot be opened in the preview")
   keys("<C-w>h")
 
-  -- ── El contenido sigue a las ediciones ──
-  keys("ggOnueva primera línea<Esc>")
-  ck(first_line(pw) == "nueva primera línea", "M12 editar el fuente actualiza el preview")
+  -- ── The content follows the edits ──
+  keys("ggOnew first line<Esc>")
+  ck(first_line(pw) == "new first line", "M12 editing the source updates the preview")
   keys("u")
 
-  -- ── Con las vistas de review: gana la última que se pide ──
+  -- ── With the review views: the last one requested wins ──
   keys(" rs"); wait(300)
   ck(views.mode == "split" and not preview_win() and ndiff() == 2 and #normal_wins() == 2,
-    "M13 <leader>rs cierra el preview y arma el par: " .. desc())
-  ck(rendered(src), "M14 el fuente vuelve a verse renderizado")
+    "M13 <leader>rs closes the preview and builds the pair: " .. desc())
+  ck(rendered(src), "M14 the source is shown rendered again")
   keys(" M"); wait(300)
   ck(views.mode == "normal" and preview_win() and ndiff() == 0 and #normal_wins() == 2,
-    "M15 <leader>M con el split pasa review a normal y abre el preview: " .. desc())
+    "M15 <leader>M with the split switches review to normal and opens the preview: " .. desc())
   keys("<C-w>l")
   keys(" rv"); wait(300)
-  ck(views.mode == "inline" and preview_win(), "M16 <leader>rv a inline mantiene el preview: " .. desc())
+  ck(views.mode == "inline" and preview_win(), "M16 <leader>rv to inline keeps the preview: " .. desc())
   keys(" rv"); wait(500)
   ck(views.mode == "split" and not preview_win() and ndiff() == 2 and #normal_wins() == 2,
-    "M17 <leader>rv a split desde el preview deja solo el par: " .. desc())
+    "M17 <leader>rv to split from the preview leaves only the pair: " .. desc())
   keys(" rn"); wait(300)
-  ck(views.mode == "normal" and ndiff() == 0 and #normal_wins() == 1, "M18 <leader>rn deja una columna: " .. desc())
+  ck(views.mode == "normal" and ndiff() == 0 and #normal_wins() == 1, "M18 <leader>rn leaves one column: " .. desc())
 
-  -- ── Cambiar de archivo ──
+  -- ── Switch file ──
   vim.cmd("only"); vim.cmd("edit doc.md"); wait(300)
   keys(" M")
   vim.cmd("edit other.md"); wait(400)
   pw = preview_win()
-  ck(pw and first_line(pw) == "# Otro", "M19 abrir otro markdown: el preview lo sigue: " .. desc())
-  ck(rendered(src), "M20 doc.md recupera su render al dejar de ser el fuente")
+  ck(pw and first_line(pw) == "# Other", "M19 opening another markdown file: the preview follows it: " .. desc())
+  ck(rendered(src), "M20 doc.md gets its render back when it stops being the source")
   vim.cmd("edit code.lua"); wait(400)
-  ck(not preview_win() and #normal_wins() == 1, "M21 abrir un archivo que no es markdown cierra el preview: " .. desc())
+  ck(not preview_win() and #normal_wins() == 1, "M21 opening a non-markdown file closes the preview: " .. desc())
   vim.cmd("edit doc.md"); wait(300)
-  ck(rendered(src) and #normal_wins() == 1, "M22 volver a doc.md: una columna y renderizado")
+  ck(rendered(src) and #normal_wins() == 1, "M22 going back to doc.md: one column and rendered")
 
-  -- ── Cerrar desde cada lado ──
+  -- ── Close from each side ──
   keys(" M"); keys("<C-w>l"); keys(" M")
-  ck(not preview_win() and #normal_wins() == 1 and rendered(src), "M23 <leader>M desde el preview cierra")
+  ck(not preview_win() and #normal_wins() == 1 and rendered(src), "M23 <leader>M from the preview closes it")
   keys(" M"); keys("<C-w>l"); vim.cmd("quit"); wait(300)
-  ck(not preview_win() and #normal_wins() == 1 and rendered(src), "M24 :q en el preview cierra limpio")
+  ck(not preview_win() and #normal_wins() == 1 and rendered(src), "M24 :q in the preview closes cleanly")
   keys(" M"); vim.cmd("only"); wait(300)
-  ck(not preview_win() and #normal_wins() == 1 and rendered(src), "M25 :only en el fuente cierra el preview")
+  ck(not preview_win() and #normal_wins() == 1 and rendered(src), "M25 :only in the source closes the preview")
   vim.cmd("vsplit other.md"); vim.cmd("wincmd l"); wait(200)
   keys(" M"); vim.cmd("quit"); wait(300)
   ck(not preview_win() and #normal_wins() == 1 and file_win("other.md"),
-    "M26 :q en el fuente con otra ventana abierta cierra el preview: " .. desc())
+    "M26 :q in the source with another window open closes the preview: " .. desc())
   vim.cmd("tabnew doc.md"); wait(300)
   keys(" M"); vim.cmd("quit"); wait(400)
   ck(#vim.api.nvim_list_tabpages() == 1 and not preview_win(),
-    "M27 :q en el fuente con el preview solo en su pestaña cierra la pestaña")
+    "M27 :q in the source with the preview alone in its tab closes the tab")
   vim.cmd("edit doc.md"); wait(300)
 
-  -- ── Respeta el modo crudo que tenía el archivo ──
+  -- ── Respects the raw mode the file had ──
   keys(" m"); wait(200)
-  ck(not rendered(src), "M28 <leader>m deja doc.md crudo")
+  ck(not rendered(src), "M28 <leader>m leaves doc.md raw")
   keys(" M"); keys(" M")
-  ck(not rendered(src), "M29 cerrar el preview devuelve el modo crudo que tenía")
+  ck(not rendered(src), "M29 closing the preview restores the raw mode it had")
   keys(" m")
 
   local msgs = vim.api.nvim_exec2("messages", { output = true }).output
-  io.stdout:write(("\n%s\nmdpreview: ok=%d fail=%d\nmensajes: [%s]\n"):format(
+  io.stdout:write(("\n%s\nmdpreview: ok=%d fail=%d\nmessages: [%s]\n"):format(
     table.concat(out, "\n"), ok_n, fail_n, (msgs:gsub("\n", " / "))))
   vim.cmd(fail_n == 0 and "qa!" or "cquit 1")
 end)
