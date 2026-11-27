@@ -3,6 +3,8 @@
 My Neovim setup: a fast editor for reviewing and writing code, with a built-in code review mode, a
 file tree that shows what changed against any commit, and Markdown that reads like a document.
 
+![Reviewing a change: the inline diff against the last commit, two review comments and the tree of changed files](docs/images/hero.png)
+
 ## Install
 
 ```bash
@@ -45,7 +47,13 @@ still starts cleanly.
 - **Fast.** Plugins load when first used, and opening a file never waits for treesitter or git. The
   measurements behind each choice are in `docs/decisions.md`.
 
-Press `<space>?` inside Neovim for the full cheatsheet.
+![The Markdown source next to its preview, which scrolls with it](docs/images/markdown.png)
+
+Press `<space>?` inside Neovim for the full cheatsheet:
+
+![The cheatsheet with every shortcut, grouped by area](docs/images/cheatsheet.png)
+
+The screenshots are real captures of this config in a small demo project.
 
 ## Layout
 

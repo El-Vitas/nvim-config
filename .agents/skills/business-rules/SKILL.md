@@ -47,7 +47,7 @@ bun run rules:query --id BR-xxxxxxx        # one rule with its full evolution hi
 bun run rules:query                        # every active rule, all areas
 bun run rules:query --status all           # every rule, any status
 bun run rules:query --features             # areas with rule counts per status
-bun run rules:query --search sesion
+bun run rules:query --search session
 ```
 
 Output is JSON. The `lineage` field in `--id` queries shows every past version with `superseded_reason`.
@@ -81,7 +81,8 @@ YAML
 - `supersedes` target must exist and be `active`.
 - Status must be `active`, `superseded` or `inactive`.
 - Always add `feature_name`, `feature_purpose` and `feature_scope` when creating a new area. Omit them for an existing one.
-- Rules are written in neutral Spanish (the user's language); ids and statuses stay in English.
+- Rules are written in English; ids and statuses stay in English too.
+- The CLI cannot change the name, purpose or scope of an existing area: those fields are only written when the area is first created.
 
 ## Supersede, never rewrite history
 

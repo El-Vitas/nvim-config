@@ -3,8 +3,27 @@ name: Búsqueda
 purpose: Qué encuentran el buscador de archivos y la búsqueda de texto del proyecto.
 scope: busqueda
 rules:
-  - id: BR-5486683
+  - id: BR-d7e16a8
     status: active
+    title: Searching files and text applies the same hidden-file criterion as the tree
+    rule: >-
+      The file finder (<leader>ff) and the text search (<leader>fg) include dotfiles, always exclude the .git folder and
+      exclude git-ignored files unless the H toggle is on.
+    why: >-
+      The user expects to find in the finder what they see in the tree; two different criteria produce results that look
+      like bugs.
+    supersedes: BR-5486683
+    scenarios:
+      - title: Toggle off
+        given: H is off and node_modules/pkg/lib/index.js exists
+        when: The user searches for index.js with <leader>ff
+        then: The node_modules file does not appear
+      - title: Dotfile
+        given: .env exists at the root
+        when: The user searches for .env with <leader>ff
+        then: .env appears
+  - id: BR-5486683
+    status: superseded
     title: Buscar archivos y texto respeta el mismo criterio de ocultos que el árbol
     rule: >-
       El buscador de archivos (<leader>ff) y la búsqueda de texto (<leader>fg) incluyen los dotfiles, excluyen siempre
@@ -12,6 +31,7 @@ rules:
     why: >-
       El usuario espera encontrar en el buscador lo mismo que ve en el árbol; dos criterios distintos producen
       resultados que parecen errores.
+    superseded_by: BR-d7e16a8
     scenarios:
       - title: Interruptor apagado
         given: H está apagado y existe node_modules/pkg/lib/index.js

@@ -3,8 +3,68 @@ name: Edición de código
 purpose: Autocompletado, sugerencias de Copilot, formato y diagnósticos mientras se escribe.
 scope: edicion
 rules:
-  - id: BR-3721cab
+  - id: BR-2bd94a0
     status: active
+    title: Autocompletion offers what the language server provides and expands its snippets
+    rule: >-
+      When typing in insert mode, the autocompletion menu offers the suggestions of the file's language server (without
+      the plain-text ones) and, when a function is confirmed, expands its snippet with the arguments.
+    why: >-
+      Plain-text suggestions repeat words from the file and bury the useful ones; expanding the snippet saves typing the
+      signature.
+    supersedes: BR-610e897
+    scenarios:
+      - title: Members of an object
+        given: A TypeScript file with the vtsls server active
+        when: The user types "Math." in insert mode
+        then: The menu offers SQRT2, LOG10E and the rest of the Math members
+  - id: BR-6cd380f
+    status: active
+    title: Formatting with <leader>p uses the language's formatter
+    rule: >-
+      <leader>p formats the file with the formatter configured for its language (Prettier for JavaScript and TypeScript,
+      StyLua for Lua) and, if there is none, with the language server. Formatting does not block the editor.
+    why: A single shortcut to format any file, with the same result the rest of the team gets with their tools.
+    supersedes: BR-b254fba
+    scenarios:
+      - title: TypeScript
+        given: A .ts file with the line "const   x=1"
+        when: The user presses <leader>p
+        then: The line becomes "const x = 1;"
+  - id: BR-6f5a88e
+    status: active
+    title: Copilot does not receive secrets files
+    rule: >-
+      Copilot is turned off in secrets and credentials files (.env and its variants, .pem and .key keys, id_rsa, .npmrc,
+      .netrc, credentials and similar), so their content does not leave the machine.
+    why: Copilot sends GitHub the text of every open buffer, from the moment it is opened and before anything is typed.
+    supersedes: BR-4a73329
+    scenarios:
+      - title: Open a .env
+        given: Copilot is active in the editor
+        when: The user opens .env
+        then: Copilot is off in that buffer
+  - id: BR-e1b381c
+    status: active
+    title: Copilot is accepted with Ctrl+j and does not take over Tab
+    rule: >-
+      A Copilot suggestion is accepted with Ctrl+j. Tab in insert mode is reserved for navigating the autocompletion
+      menu and never accepts a Copilot suggestion.
+    why: >-
+      Tab already moves the autocompletion selection; if it also accepted Copilot, the same key would do two things
+      depending on what is on screen.
+    supersedes: BR-3721cab
+    scenarios:
+      - title: Accept
+        given: Copilot shows a gray suggestion
+        when: The user presses Ctrl+j
+        then: The suggestion is inserted
+      - title: Tab
+        given: Copilot shows a suggestion and the autocompletion menu is open
+        when: The user presses Tab
+        then: The next menu item is selected and the Copilot suggestion is not inserted
+  - id: BR-3721cab
+    status: superseded
     title: Copilot se acepta con Ctrl+j y no se adueña de Tab
     rule: >-
       Una sugerencia de Copilot se acepta con Ctrl+j. Tab en modo insert queda para navegar el menú de autocompletado y
@@ -12,6 +72,7 @@ rules:
     why: >-
       Tab ya mueve la selección del autocompletado; si también aceptara Copilot, la misma tecla haría dos cosas según
       qué esté a la vista.
+    superseded_by: BR-e1b381c
     scenarios:
       - title: Aceptar
         given: Copilot muestra una sugerencia en gris
@@ -22,19 +83,20 @@ rules:
         when: El usuario aprieta Tab
         then: Se selecciona el siguiente ítem del menú y la sugerencia de Copilot no se inserta
   - id: BR-4a73329
-    status: active
+    status: superseded
     title: Copilot no recibe archivos de secretos
     rule: >-
       Copilot queda apagado en archivos de secretos y credenciales (.env y sus variantes, llaves .pem y .key, id_rsa,
       .npmrc, .netrc, credentials y similares), así su contenido no sale del equipo.
     why: Copilot manda a GitHub el texto de cada buffer abierto, desde que se abre y antes de escribir nada.
+    superseded_by: BR-6f5a88e
     scenarios:
       - title: Abrir un .env
         given: Copilot está activo en el editor
         when: El usuario abre .env
         then: Copilot está apagado en ese buffer
   - id: BR-610e897
-    status: active
+    status: superseded
     title: El autocompletado ofrece lo del servidor de lenguaje y expande sus snippets
     rule: >-
       Al escribir en modo insert, el menú de autocompletado ofrece las sugerencias del servidor de lenguaje del archivo
@@ -42,13 +104,14 @@ rules:
     why: >-
       Las sugerencias de texto plano repiten palabras del archivo y tapan las útiles; expandir el snippet ahorra
       escribir la firma.
+    superseded_by: BR-2bd94a0
     scenarios:
       - title: Miembros de un objeto
         given: Un archivo TypeScript con el servidor vtsls activo
         when: El usuario escribe "Math." en modo insert
         then: El menú ofrece SQRT2, LOG10E y el resto de miembros de Math
   - id: BR-b254fba
-    status: active
+    status: superseded
     title: Formatear con <leader>p usa el formateador del lenguaje
     rule: >-
       <leader>p formatea el archivo con el formateador configurado para su lenguaje (Prettier para JavaScript y
@@ -56,6 +119,7 @@ rules:
     why: >-
       Un solo atajo para formatear cualquier archivo, con el mismo resultado que obtiene el resto del equipo con sus
       herramientas.
+    superseded_by: BR-6cd380f
     scenarios:
       - title: TypeScript
         given: Un archivo .ts con la línea "const   x=1"

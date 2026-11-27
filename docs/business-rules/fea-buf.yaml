@@ -3,8 +3,28 @@ name: Buffers abiertos
 purpose: Cuántos archivos quedan cargados a la vez y cuáles se cierran solos.
 scope: buffers
 rules:
-  - id: BR-17614a6
+  - id: BR-8c75b69
     status: active
+    title: At most five files are kept loaded
+    rule: >-
+      When a new file is opened, if more than five files remain loaded, the one used longest ago is closed. A file with
+      unsaved changes or one visible in any window is never closed. A file closed this way is still reachable from the
+      review changes list (quickfix), the marks and the jump history.
+    why: >-
+      Keeps the buffer list short and the editor light, without risking unsaved work or breaking navigation to files
+      already visited.
+    supersedes: BR-17614a6
+    scenarios:
+      - title: Sixth file
+        given: Five files are loaded, none modified or visible except the current one
+        when: The user opens a sixth file
+        then: The file used longest ago is closed
+      - title: Changes list
+        given: The review changes quickfix points to a file that was closed because of the limit
+        when: The user picks that entry
+        then: The file opens
+  - id: BR-17614a6
+    status: superseded
     title: Se mantienen como máximo cinco archivos cargados
     rule: >-
       Al abrir un archivo nuevo, si quedan más de cinco archivos cargados, se cierra el que se usó hace más tiempo.
@@ -14,9 +34,7 @@ rules:
       Mantiene corta la lista de buffers y el editor liviano, sin arriesgar trabajo sin guardar ni romper la navegación
       hacia archivos ya visitados.
     supersedes: BR-da9557e
-    superseded_reason: >-
-      El cierre borraba el buffer por completo y la quickfix de cambios perdía la referencia al archivo; ahora se cierra
-      con la semántica de :bdelete.
+    superseded_by: BR-8c75b69
     scenarios:
       - title: Sexto archivo
         given: Hay cinco archivos cargados, ninguno modificado ni visible salvo el actual

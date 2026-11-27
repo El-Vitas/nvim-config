@@ -3,20 +3,89 @@ name: Sesión
 purpose: Cómo se guarda y se restaura el estado de trabajo (archivos abiertos, ventanas, árbol) entre aperturas de Neovim.
 scope: sesion
 rules:
-  - id: BR-173fba4
+  - id: BR-659d5e8
     status: active
+    title: The session is saved automatically with little delay
+    rule: >-
+      The session is saved without the user asking, at most one second after the last file change, immediately when the
+      terminal loses focus and on exit. Saving never stalls the file change or the opening of the tree or the finder.
+    why: >-
+      The user sometimes closes the terminal abruptly; the session must be up to date anyway. Saving on every buffer
+      exit cost 25 to 38 ms per action (D-02).
+    supersedes: BR-f1870a2
+    scenarios:
+      - title: Deferred save
+        given: There is an active session
+        when: The user opens c.ts and waits one second
+        then: The session file exists and reflects c.ts
+      - title: Rapid file switching
+        given: There is an active session
+        when: The user changes file ten times in under one second
+        then: The session is saved only once, at the end
+  - id: BR-8cc3874
+    status: active
+    title: Opening Neovim without files restores the directory's session
+    rule: >-
+      When Neovim is opened without files in a directory, the files and windows of that directory's last session are
+      restored. When Neovim is opened with a file, only that file is opened. In both cases the tree opens again if it
+      was open when leaving that project, with its mode and its expanded folders.
+    why: >-
+      Resuming work where it was left is the common case; opening a specific file is a different intent and must not
+      drag along the whole session. The tree is part of the project's workspace and is remembered separately.
+    supersedes: BR-9fb04bc
+    scenarios:
+      - title: No arguments
+        given: The directory's last session had a.ts and c.ts open
+        when: The user runs nvim with no arguments in that directory
+        then: a.ts and c.ts are open again
+      - title: With a file
+        given: A saved session exists for the directory and the tree was open on exit
+        when: The user runs nvim README.md
+        then: Only README.md is opened, with the tree open
+  - id: BR-d098761
+    status: active
+    title: Stopping the session save stops all saving
+    rule: >-
+      After <leader>qd, the session is not saved again for the rest of the Neovim session, not when changing file, not
+      when losing focus, not on exit.
+    why: >-
+      The user uses <leader>qd when they do not want this session to overwrite the saved one; a save that keeps
+      happening by another route breaks that promise.
+    context: Before this rule, the save on buffer change stayed active after <leader>qd.
+    supersedes: BR-497b4df
+    scenarios:
+      - title: After stopping
+        given: The user pressed <leader>qd
+        when: They open another file and wait two seconds
+        then: The session file is not written
+  - id: BR-efcdcfe
+    status: active
+    title: A commit message does not overwrite the session
+    rule: >-
+      Opening Neovim to write a commit message or an interactive rebase (git with EDITOR=nvim) never saves or replaces
+      the directory's session.
+    why: Without this, the next nvim with no arguments restored only COMMIT_EDITMSG instead of the real work.
+    supersedes: BR-173fba4
+    scenarios:
+      - title: git commit
+        given: The directory has a session with a.ts and c.ts
+        when: The user runs git commit and writes the message in Neovim
+        then: The saved session still has a.ts and c.ts
+  - id: BR-173fba4
+    status: superseded
     title: Un mensaje de commit no pisa la sesión
     rule: >-
       Abrir Neovim para escribir un mensaje de commit o un rebase interactivo (git con EDITOR=nvim) nunca guarda ni
       reemplaza la sesión del directorio.
     why: Sin esto, el siguiente nvim sin argumentos restauraba solo el COMMIT_EDITMSG en vez del trabajo real.
+    superseded_by: BR-efcdcfe
     scenarios:
       - title: git commit
         given: El directorio tiene una sesión con a.ts y c.ts
         when: El usuario hace git commit y escribe el mensaje en Neovim
         then: La sesión guardada sigue teniendo a.ts y c.ts
   - id: BR-497b4df
-    status: active
+    status: superseded
     title: Dejar de guardar la sesión detiene todo guardado
     rule: >-
       Después de <leader>qd, la sesión no se vuelve a guardar en lo que queda de la sesión de Neovim, ni al cambiar de
@@ -25,13 +94,14 @@ rules:
       El usuario usa <leader>qd cuando no quiere que esta sesión pise la guardada; un guardado que sigue ocurriendo por
       otra vía rompe esa promesa.
     context: Antes de esta regla, el guardado al cambiar de buffer seguía activo después de <leader>qd.
+    superseded_by: BR-d098761
     scenarios:
       - title: Después de detener
         given: El usuario apretó <leader>qd
         when: Abre otro archivo y espera dos segundos
         then: El archivo de sesión no se escribe
   - id: BR-9fb04bc
-    status: active
+    status: superseded
     title: Abrir Neovim sin archivos restaura la sesión del directorio
     rule: >-
       Al abrir Neovim sin archivos en un directorio, se restauran los archivos y ventanas de la última sesión de ese
@@ -40,6 +110,7 @@ rules:
     why: >-
       Retomar el trabajo donde quedó es el caso común; abrir un archivo puntual es una intención distinta y no debe
       arrastrar la sesión entera. El árbol es parte del puesto de trabajo del proyecto y se recuerda aparte.
+    superseded_by: BR-8cc3874
     scenarios:
       - title: Sin argumentos
         given: La última sesión del directorio tenía a.ts y c.ts abiertos
@@ -50,7 +121,7 @@ rules:
         when: El usuario ejecuta nvim README.md
         then: Se abre solo README.md, con el árbol abierto
   - id: BR-f1870a2
-    status: active
+    status: superseded
     title: La sesión se guarda sola y con poco atraso
     rule: >-
       La sesión se guarda sin que el usuario lo pida, como máximo un segundo después del último cambio de archivo, de
@@ -59,6 +130,7 @@ rules:
     why: >-
       El usuario cierra la terminal de golpe a veces; la sesión tiene que quedar al día igual. Guardar en cada salida de
       buffer costaba 25 a 38 ms por acción (D-02).
+    superseded_by: BR-659d5e8
     scenarios:
       - title: Guardado diferido
         given: Hay una sesión activa

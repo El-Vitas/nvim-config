@@ -3,8 +3,100 @@ name: Comentarios de review
 purpose: Cómo se crean, editan, resuelven y guardan los comentarios de revisión, incluidos los que agrega el agente.
 scope: review-comentarios
 rules:
-  - id: BR-15ce8ff
+  - id: BR-0d4e8ee
     status: active
+    title: Lowercase aliases only act as a whole command
+    rule: >-
+      The lowercase review aliases (:rl, :rv, :rs and the rest) are only converted into the command when they are the
+      complete command line. Inside a substitution, a :g or a text, they stay as typed.
+    why: An alias that expanded in any position turned :%s/rl/x/g into :%s/Rl/x/g and made :g/rt/d delete other lines.
+    supersedes: BR-e87ea8b
+    scenarios:
+      - title: Substitution
+        given: A line contains "rl"
+        when: The user runs :%s/rl/X/g
+        then: '"rl" is replaced, not "Rl"'
+  - id: BR-7517589
+    status: active
+    title: Cursor actions act on the comment that is shown
+    rule: >-
+      When several comments cover the cursor line, edit, resolve, delete and peek act on the most specific one (the one
+      with the shortest range). Editing from the popup or from the peek changes the comment that was being viewed, even
+      if the file's lines change in the meantime. Peek also works on a file comment.
+    why: The peek showed one comment and the edit key changed another; the user edited something they were not looking at.
+    context: Verified by tests/comments/mode_spec.lua.
+    supersedes: BR-891a645
+    scenarios:
+      - title: Nested comments
+        given: One comment covers lines 1 to 5 and another covers only line 3
+        when: The user edits with the cursor on line 3
+        then: The line 3 comment changes and the 1 to 5 comment stays the same
+  - id: BR-af96dfc
+    status: active
+    title: What the agent sends is validated and never overwrites unsaved work
+    rule: >-
+      The agent can only add comments with a path inside the repo, a valid line and non-empty text, and cannot sign as
+      the user. Asking for the context of a comment returns at most 500 lines and never reads files outside the repo. If
+      the agent changes on disk a file that the user has with unsaved changes, the buffer is not touched and the editor
+      warns once. Files that are not UTF-8 are not reconciled automatically.
+    why: >-
+      A mistyped value from the agent was saved and broke comment drawing on every startup; a huge range froze the
+      editor; and the user's unsaved work must not be lost because of an agent change.
+    context: Verified by tests/agent/rpc_spec.lua and watch_spec.lua.
+    supersedes: BR-8d91a7e
+    scenarios:
+      - title: Invalid line
+        given: The agent is connected
+        when: It adds a comment with lnum = "5" (text)
+        then: The comment is rejected and nothing is saved
+      - title: Conflict with unsaved changes
+        given: The user edited foo.ts without saving
+        when: The agent rewrites foo.ts on disk
+        then: The buffer keeps the user's edit and a warning appears
+  - id: BR-bf763cb
+    status: active
+    title: The export for the agent separates pending comments from replies
+    rule: >-
+      When copying comments for an agent (:Rya, :Ryf), each pending comment comes out numbered, and its replies are
+      indented below it with their author, without a number. Several comments on the same line come out in the order
+      they were created, the same on every export.
+    why: >-
+      If the agent's replies came out as numbered items, the agent received them back as pending tasks; and an order
+      that changed between exports meant that "number 3" was not always the same comment.
+    context: Verified by tests/export/markdown_spec.lua.
+    supersedes: BR-15ce8ff
+    scenarios:
+      - title: Answered comment
+        given: A pending comment has a reply from the agent
+        when: The user exports with :Rya
+        then: 'The comment comes out numbered and the reply goes below it as "↳ agent: …", without a number'
+  - id: BR-e92e3d0
+    status: active
+    title: Comments are not lost
+    rule: >-
+      Comments are saved in the repo where they were loaded. A cut in the middle of saving never leaves the comments
+      file empty or half written, and if the file is unreadable it is set aside under another name and the user is told,
+      instead of being treated as empty. If they cannot be saved (for example, Neovim opened outside a repo), the editor
+      warns. When changing directory to another repo with :cd, the previous repo's comments are saved and the new repo's
+      are loaded.
+    why: >-
+      Comments are the product of the review; losing them silently, or writing one project's comments into another,
+      destroys the user's work.
+    context: Verified by tests/core/store_spec.lua and state_spec.lua.
+    supersedes: BR-5b5b46d
+    scenarios:
+      - title: Corrupt file
+        given: comments.json was cut off halfway
+        when: The user opens Neovim
+        then: >-
+          The file is set aside as comments.json.corrupt-<date>, the user is told, and the next save does not overwrite
+          it
+      - title: Repo change
+        given: Comments from repo A are loaded
+        when: The user runs :cd to repo B
+        then: A's comments stay saved in A and B's comments are shown
+  - id: BR-15ce8ff
+    status: superseded
     title: El export para el agente separa pendientes de respuestas
     rule: >-
       Al copiar los comentarios para un agente (:Rya, :Ryf), cada comentario pendiente sale numerado, y sus respuestas
@@ -14,13 +106,14 @@ rules:
       Si las respuestas del agente salían como ítems numerados, el agente las recibía de vuelta como tareas pendientes;
       y un orden que cambiaba entre exportaciones hacía que "el 3" no fuera siempre el mismo comentario.
     context: Verificado por tests/export/markdown_spec.lua.
+    superseded_by: BR-bf763cb
     scenarios:
       - title: Comentario respondido
         given: Un comentario pendiente tiene una respuesta del agente
         when: El usuario exporta con :Rya
         then: 'El comentario sale numerado y la respuesta va debajo como "↳ agent: …", sin número'
   - id: BR-5b5b46d
-    status: active
+    status: superseded
     title: Los comentarios no se pierden
     rule: >-
       Los comentarios se guardan en el repo donde se cargaron. Un corte a mitad de guardado nunca deja el archivo de
@@ -31,6 +124,7 @@ rules:
       Los comentarios son el producto de la revisión; perderlos en silencio, o escribir los de un proyecto en otro,
       destruye trabajo del usuario.
     context: Verificado por tests/core/store_spec.lua y state_spec.lua.
+    superseded_by: BR-e92e3d0
     scenarios:
       - title: Archivo corrupto
         given: comments.json quedó cortado a la mitad
@@ -41,7 +135,7 @@ rules:
         when: El usuario hace :cd al repo B
         then: Los comentarios de A quedan guardados en A y se ven los de B
   - id: BR-891a645
-    status: active
+    status: superseded
     title: Las acciones por cursor actúan sobre el comentario que se ve
     rule: >-
       Cuando varios comentarios cubren la línea del cursor, editar, resolver, borrar y el peek actúan sobre el más
@@ -50,13 +144,14 @@ rules:
       archivo.
     why: El peek mostraba un comentario y la tecla de editar cambiaba otro; el usuario editaba lo que no estaba mirando.
     context: Verificado por tests/comments/mode_spec.lua.
+    superseded_by: BR-7517589
     scenarios:
       - title: Comentarios anidados
         given: Un comentario cubre las líneas 1 a 5 y otro solo la línea 3
         when: El usuario edita con el cursor en la línea 3
         then: Cambia el comentario de la línea 3 y el de 1 a 5 queda igual
   - id: BR-8d91a7e
-    status: active
+    status: superseded
     title: Lo que manda el agente se valida y nunca pisa trabajo sin guardar
     rule: >-
       El agente solo puede agregar comentarios con ruta dentro del repo, línea válida y texto no vacío, y no puede
@@ -67,6 +162,7 @@ rules:
       Un valor mal tipeado por el agente quedaba guardado y rompía el pintado de comentarios en cada arranque; un rango
       enorme congelaba el editor; y el trabajo sin guardar del usuario no puede perderse por un cambio del agente.
     context: Verificado por tests/agent/rpc_spec.lua y watch_spec.lua.
+    superseded_by: BR-af96dfc
     scenarios:
       - title: Línea inválida
         given: El agente está conectado
@@ -77,7 +173,7 @@ rules:
         when: El agente reescribe foo.ts en disco
         then: El buffer conserva la edición del usuario y aparece un aviso
   - id: BR-e87ea8b
-    status: active
+    status: superseded
     title: Los alias en minúscula solo actúan como comando entero
     rule: >-
       Los alias en minúscula de review (:rl, :rv, :rs y el resto) solo se convierten en el comando cuando son la línea
@@ -85,6 +181,7 @@ rules:
     why: >-
       Un alias que se expandía en cualquier posición convertía :%s/rl/x/g en :%s/Rl/x/g y hacía que :g/rt/d borrara
       otras líneas.
+    superseded_by: BR-0d4e8ee
     scenarios:
       - title: Sustitución
         given: Una línea contiene "rl"

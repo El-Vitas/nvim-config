@@ -5,8 +5,204 @@ purpose: >-
   cambiar de archivo, de ventana o de pestaña.
 scope: review-vistas
 rules:
-  - id: BR-17205e2
+  - id: BR-577b418
     status: active
+    title: Closing a split column by hand switches to the normal view
+    rule: >-
+      If the user closes by hand either of the two columns of the split (or the tab that contains them, or the code
+      window that held the pair), the other column is closed and the global view switches to normal. The pair does not
+      reappear by itself when changing focus or file; it comes back with <leader>rs or <leader>rv.
+    why: >-
+      Owner's decision (2026-10-28). Closing a column means "I do not want split"; having the pair reappear on the next
+      focus change undid a user action on its own.
+    context: >-
+      Closes made by the plugin itself (when changing view or file) do not count. Verified by
+      tests/e2e/split_windows.lua (W10-W13, W15-W16b).
+    supersedes: BR-f158336
+    scenarios:
+      - title: Close the HEAD column
+        given: The split view shows keep.ts's pair
+        when: The user closes the HEAD column and then moves focus to another window and back
+        then: keep.ts stays in a single column and the view is normal
+      - title: Changing view is not a close
+        given: The split view is active
+        when: The user switches to the inline view
+        then: The view stays inline, not normal
+  - id: BR-64e490b
+    status: active
+    title: The markdown preview and the review split do not combine
+    rule: >-
+      The markdown preview and the review split view occupy the two columns, so they are never open at the same time.
+      The last one requested wins. Switching review to split (<leader>rs, or <leader>rv when reaching split) from either
+      of the two columns closes the preview and sets up the pair. Opening the preview with review in split switches
+      review to the normal view. The inline view coexists with the preview, because it is drawn over the raw file.
+    why: >-
+      Reported on 2026-10-28: with both open there were three columns (base, file and preview) and closing one left the
+      other in a half-finished state.
+    context: Details in docs/decisions.md (D-22). Verified by tests/mdpreview.lua (M13-M18).
+    supersedes: BR-4ecefa6
+    scenarios:
+      - title: Review split with the preview open
+        given: The preview of doc.md is open, with changes against the base
+        when: The user presses <leader>rs
+        then: The preview closes and the base and file pair remains, in two columns
+      - title: Preview with the review split
+        given: Review is in split on doc.md
+        when: The user presses <leader>M
+        then: Review switches to the normal view and the raw file remains with its preview
+  - id: BR-6ff966f
+    status: active
+    title: In split there is a single pair, which follows the file
+    rule: >-
+      With the split view there is at most one pair per tab, one HEAD column and one editing column, and the HEAD column
+      always shows the base of the file being edited. A HEAD column without its pair or a lone window in diff mode never
+      remains. Files are always opened in the editing column, never in the HEAD one.
+    why: >-
+      An extra pair or an orphan column shows a comparison that no longer matches what is being edited and confuses the
+      review.
+    context: Verified by tests/e2e/split_windows.lua (W1, W2, W10, W14).
+    supersedes: BR-d9e5c68
+    scenarios:
+      - title: Change file
+        given: The split view shows keep.ts against its base
+        when: The user opens mod.ts, which also has changes
+        then: There is still a single pair and the HEAD column shows mod.ts's base
+      - title: Another tab
+        given: Tab 1 has the pair for keep.ts
+        when: The user opens mod.ts in a new tab
+        then: The pair is in tab 2 and tab 1 does not keep dangling columns
+  - id: BR-7112214
+    status: active
+    title: Leaving the split leaves no file in diff mode
+    rule: >-
+      After leaving the split view, no file remains in diff mode or with the split's highlighting, even if the file was
+      changed before leaving, and even if the user later returns to the same window. The view shortcuts (<leader>rn,
+      <leader>ri, <leader>rs, <leader>rv) always change what is shown. A diff that the user sets up by hand (:diffthis)
+      is not touched.
+    why: >-
+      Reported on 2026-10-28: when returning to a file that had been in the pair, it was still in diff mode and it
+      looked like the view shortcuts did nothing.
+    context: Technical detail in review-mode/docs/decisions.md (B20). Verified by tests/e2e/split_windows.lua (W18-W20).
+    supersedes: BR-2966d08
+    scenarios:
+      - title: Return to a file that was in the pair
+        given: The split showed keep.ts and the user moved to another file and to the normal view
+        when: They return to keep.ts
+        then: keep.ts is shown without diff and without the split's highlighting
+      - title: Manual diff
+        given: The user ran :diffthis on two files of the repo with the normal view
+        when: They switch windows between them
+        then: Both remain in diff mode
+  - id: BR-989b073
+    status: active
+    title: The view is global and follows the active file
+    rule: >-
+      The review view (normal, inline or split) is a single one for the whole editor and is applied to the file that has
+      focus. Changing file does not change the view. Changing the view from either of the two columns of the split
+      clears both.
+    why: >-
+      The user reviews several files in a row with the same view; having to choose it again on every file, or having one
+      of the two columns left hanging when the view changes, breaks the review.
+    context: Verified by tests/e2e/split_hard.lua (2-4) and split_reentry.lua.
+    supersedes: BR-9d079b2
+    scenarios:
+      - title: Change view from the HEAD column
+        given: The split view is active and the focus is on the HEAD column
+        when: The user switches to the normal view
+        then: Both columns of the pair disappear and no window remains in diff mode
+  - id: BR-b7435c0
+    status: active
+    title: Split reduces to one column when there is nothing to compare
+    rule: >-
+      With the split view active, a file without changes against the base, a new file without a base or a file outside
+      the repo is shown in a single column. When returning to a file with changes, the pair sets itself up again.
+      Outside the repo the editor does not change any window option.
+    why: >-
+      An empty or identical HEAD column takes up half the screen without adding anything; touching the options of files
+      outside the repo surprises the user.
+    context: Verified by tests/e2e/split_windows.lua (W3-W6, W16c-W16d).
+    supersedes: BR-c517e19
+    scenarios:
+      - title: File identical to the base
+        given: The split view is active
+        when: The user opens a file without changes against the base
+        then: It is shown in a single column and the view is still split
+  - id: BR-dbe74f9
+    status: active
+    title: The inline view shows what was deleted where it was
+    rule: >-
+      In the inline view, deleted lines are shown in red above the line that now occupies their place, and a deletion at
+      the end of the file is shown below the last line. Added lines are highlighted in green.
+    why: >-
+      The position of what was deleted is part of the information; showing a deleted line from the end before the last
+      line asserts a false order.
+    context: Verified by tests/views/inline_spec.lua.
+    supersedes: BR-35c4a1a
+    scenarios:
+      - title: Deletion at the end
+        given: The base has a, b, c, d and the file has a, b, c
+        when: The user looks at the inline view
+        then: Line "d" appears in red below "c"
+  - id: BR-e249416
+    status: active
+    title: Closing or changing split columns never closes Neovim
+    rule: >-
+      Changing file, changing view or closing any column of the split (also with :q, also on markdown files) never makes
+      Neovim close or lose the session.
+    why: >-
+      Reported on 2026-10-28: in split on a markdown file, changing file closed Neovim abruptly (SIGSEGV). The cause is
+      a Neovim bug triggered when a plugin queries the windows in the middle of a close; review-mode prevents that
+      situation from happening.
+    context: Technical detail in review-mode/docs/decisions.md (B19). Verified by tests/e2e/split_markdown.lua.
+    supersedes: BR-9503d46
+    scenarios:
+      - title: Markdown to another file
+        given: The split view shows doc.md with changes
+        when: The user opens a file without changes
+        then: Neovim stays open and the file is shown in one column
+      - title: Close the HEAD column with :q
+        given: The split view shows doc.md with changes
+        when: The user closes the HEAD column with :q
+        then: Neovim stays open and the view switches to normal
+  - id: BR-fc352d5
+    status: active
+    title: A file that is new relative to the base is marked the same everywhere
+    rule: >-
+      With a comparison base chosen, a file that does not exist in the base is new even if it is already committed. The
+      file tree and the changes tree show it with N, the inline view paints it entirely as added and the split shows it
+      in one column. The blame of each line still names the commit that wrote it; "Not Committed Yet" is left only for
+      what is truly not committed. A git-ignored file is not marked.
+    why: >-
+      Reported on 2026-10-28 in FastCase: gitsigns painted the file green, the tree gave it no letter, inline showed
+      nothing and the blame said "Not Committed Yet" on committed lines.
+    context: >-
+      Details in review-mode/docs/decisions.md (B21) and docs/decisions.md (D-20). Verified by tests/core/git_spec.lua
+      and tests/views/inline_spec.lua.
+    supersedes: BR-c380654
+    scenarios:
+      - title: File created after the base
+        given: The base is a commit prior to the creation of pagination.constants.ts, which is already committed
+        when: The user opens the file with the inline view and the file tree
+        then: All lines are shown in green, the tree marks it with N and the blame shows the commit that created it
+  - id: BR-fe27f26
+    status: active
+    title: Special windows do not break the pair and nothing leaks to other windows
+    rule: >-
+      Moving focus to the tree, the help, the quickfix or a floating window does not change the split pair. The options
+      that the split sets on its two columns (diff highlighting, folds, wrap) do not pass to any other window or to new
+      windows.
+    why: >-
+      The user consults the tree or the help in the middle of a review and expects to return to the same pair; a new
+      window that is born with the diff's green highlighting looks like a bug.
+    context: Verified by tests/e2e/split_windows.lua (W7-W9).
+    supersedes: BR-17205e2
+    scenarios:
+      - title: New window during the split
+        given: The split view is active
+        when: The user opens a new window with :new
+        then: The new window does not have the split's highlighting or diff mode
+  - id: BR-17205e2
+    status: superseded
     title: Las ventanas especiales no desarman el par y nada se filtra a otras ventanas
     rule: >-
       Pasar el foco al árbol, a la ayuda, a la quickfix o a una ventana flotante no cambia el par del split. Las
@@ -16,13 +212,14 @@ rules:
       El usuario consulta el árbol o la ayuda en medio de una revisión y espera volver al mismo par; una ventana nueva
       que nace con el resaltado verde del diff parece un error.
     context: Verificado por tests/e2e/split_windows.lua (W7-W9).
+    superseded_by: BR-fe27f26
     scenarios:
       - title: Ventana nueva durante el split
         given: La vista split está activa
         when: El usuario abre una ventana nueva con :new
         then: La ventana nueva no tiene el resaltado ni el modo diff del split
   - id: BR-2966d08
-    status: active
+    status: superseded
     title: Salir del split no deja ningún archivo en modo diff
     rule: >-
       Después de salir de la vista split, ningún archivo queda en modo diff ni con el resaltado del split, aunque se
@@ -33,6 +230,7 @@ rules:
       Reportado el 2026-10-28: al volver a un archivo que había estado en el par, seguía en modo diff y parecía que los
       atajos de vista no hacían nada.
     context: Detalle técnico en review-mode/docs/decisions.md (B20). Verificado por tests/e2e/split_windows.lua (W18-W20).
+    superseded_by: BR-7112214
     scenarios:
       - title: Volver a un archivo que estuvo en el par
         given: El split mostraba keep.ts y el usuario pasó a otro archivo y a la vista normal
@@ -43,7 +241,7 @@ rules:
         when: Cambia de ventana entre ellos
         then: Los dos siguen en modo diff
   - id: BR-35c4a1a
-    status: active
+    status: superseded
     title: La vista inline muestra lo borrado donde estaba
     rule: >-
       En la vista inline las líneas borradas se muestran en rojo encima de la línea que ahora ocupa su lugar, y un
@@ -52,13 +250,14 @@ rules:
       La posición de lo borrado es parte de la información; mostrar una línea borrada del final antes de la última línea
       afirma un orden falso.
     context: Verificado por tests/views/inline_spec.lua.
+    superseded_by: BR-dbe74f9
     scenarios:
       - title: Borrado al final
         given: La base tiene a, b, c, d y el archivo tiene a, b, c
         when: El usuario mira la vista inline
         then: La línea "d" aparece en rojo debajo de "c"
   - id: BR-4ecefa6
-    status: active
+    status: superseded
     title: La vista previa de markdown y el split de review no se combinan
     rule: >-
       La vista previa de markdown y la vista split de review ocupan las dos columnas, así que nunca están abiertas a la
@@ -70,6 +269,7 @@ rules:
       Reportado el 2026-10-28: con las dos abiertas quedaban tres columnas (base, archivo y vista previa) y cerrar una
       dejaba la otra en un estado a medias.
     context: Detalle en docs/decisions.md (D-22). Verificado por tests/mdpreview.lua (M13-M18).
+    superseded_by: BR-64e490b
     scenarios:
       - title: Split de review con la vista previa abierta
         given: La vista previa de doc.md está abierta, con cambios contra la base
@@ -80,7 +280,7 @@ rules:
         when: El usuario aprieta <leader>M
         then: Review pasa a la vista normal y queda el archivo crudo con su vista previa
   - id: BR-9503d46
-    status: active
+    status: superseded
     title: Cerrar o cambiar columnas del split nunca cierra Neovim
     rule: >-
       Cambiar de archivo, cambiar de vista o cerrar cualquier columna del split (también con :q, también sobre archivos
@@ -90,6 +290,7 @@ rules:
       es un bug de Neovim que se dispara cuando un plugin consulta las ventanas en medio de un cierre; review-mode evita
       que se dé esa situación.
     context: Detalle técnico en review-mode/docs/decisions.md (B19). Verificado por tests/e2e/split_markdown.lua.
+    superseded_by: BR-e249416
     scenarios:
       - title: Markdown a otro archivo
         given: La vista split muestra doc.md con cambios
@@ -100,7 +301,7 @@ rules:
         when: El usuario cierra la columna HEAD con :q
         then: Neovim sigue abierto y la vista pasa a normal
   - id: BR-9d079b2
-    status: active
+    status: superseded
     title: La vista es global y sigue al archivo activo
     rule: >-
       La vista de review (normal, inline o split) es una sola para todo el editor y se aplica al archivo que tiene el
@@ -110,13 +311,14 @@ rules:
       El usuario revisa varios archivos seguidos con la misma vista; tener que volver a elegirla en cada archivo, o que
       una de las dos columnas quede colgada al cambiar de vista, rompe la revisión.
     context: Verificado por tests/e2e/split_hard.lua (2-4) y split_reentry.lua.
+    superseded_by: BR-989b073
     scenarios:
       - title: Cambiar de vista desde la columna HEAD
         given: La vista split está activa y el foco está en la columna HEAD
         when: El usuario pasa a la vista normal
         then: Desaparecen las dos columnas del par y ninguna ventana queda en modo diff
   - id: BR-c380654
-    status: active
+    status: superseded
     title: Un archivo nuevo respecto de la base se marca igual en todas partes
     rule: >-
       Con una base de comparación elegida, un archivo que no existe en la base es nuevo aunque ya esté commiteado. El
@@ -129,13 +331,14 @@ rules:
     context: >-
       Detalle en review-mode/docs/decisions.md (B21) y docs/decisions.md (D-20). Verificado por tests/core/git_spec.lua
       y tests/views/inline_spec.lua.
+    superseded_by: BR-fc352d5
     scenarios:
       - title: Archivo creado después de la base
         given: La base es un commit anterior a la creación de pagination.constants.ts, que ya está commiteado
         when: El usuario abre el archivo con la vista inline y el árbol de archivos
         then: Todas las líneas se ven en verde, el árbol lo marca con N y el blame muestra el commit que lo creó
   - id: BR-c517e19
-    status: active
+    status: superseded
     title: Split se reduce a una columna cuando no hay nada que comparar
     rule: >-
       Con la vista split activa, un archivo sin cambios contra la base, un archivo nuevo sin base o un archivo fuera del
@@ -145,13 +348,14 @@ rules:
       Una columna HEAD vacía o idéntica ocupa media pantalla sin aportar nada; tocar opciones de archivos ajenos al repo
       sorprende al usuario.
     context: Verificado por tests/e2e/split_windows.lua (W3-W6, W16c-W16d).
+    superseded_by: BR-b7435c0
     scenarios:
       - title: Archivo idéntico a la base
         given: La vista split está activa
         when: El usuario abre un archivo sin cambios contra la base
         then: Se ve en una sola columna y la vista sigue siendo split
   - id: BR-d9e5c68
-    status: active
+    status: superseded
     title: En split hay un solo par, que sigue al archivo
     rule: >-
       Con la vista split hay como mucho un par por pestaña, una columna HEAD y una columna de edición, y la columna HEAD
@@ -161,6 +365,7 @@ rules:
       Un par extra o una columna huérfana muestran una comparación que ya no corresponde a lo que se edita y confunden
       la revisión.
     context: Verificado por tests/e2e/split_windows.lua (W1, W2, W10, W14).
+    superseded_by: BR-6ff966f
     scenarios:
       - title: Cambiar de archivo
         given: La vista split muestra keep.ts contra su base
@@ -171,7 +376,7 @@ rules:
         when: El usuario abre mod.ts en una pestaña nueva
         then: El par está en la pestaña 2 y la pestaña 1 no queda con columnas colgadas
   - id: BR-f158336
-    status: active
+    status: superseded
     title: Cerrar una columna del split a mano pasa a la vista normal
     rule: >-
       Si el usuario cierra a mano cualquiera de las dos columnas del split (o la pestaña que las contiene, o la ventana
@@ -183,6 +388,7 @@ rules:
     context: >-
       Los cierres que hace el propio plugin (al cambiar de vista o de archivo) no cuentan. Verificado por
       tests/e2e/split_windows.lua (W10-W13, W15-W16b).
+    superseded_by: BR-577b418
     scenarios:
       - title: Cerrar la columna HEAD
         given: La vista split muestra el par de keep.ts
