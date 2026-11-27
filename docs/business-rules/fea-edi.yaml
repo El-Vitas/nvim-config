@@ -1,7 +1,7 @@
 id: FEA-EDI
-name: Edición de código
-purpose: Autocompletado, sugerencias de Copilot, formato y diagnósticos mientras se escribe.
-scope: edicion
+name: Code editing
+purpose: Completion, Copilot suggestions, formatting and diagnostics while typing.
+scope: editing
 rules:
   - id: BR-2bd94a0
     status: active

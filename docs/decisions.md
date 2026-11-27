@@ -145,7 +145,7 @@ nvim-scrollbar warned on every startup that on 2026-11-16 its `main` moves to v2
 
 ## D-15 · Rules documentation with the `mio` CLI
 
-The behavior rules use the same registry as the `mio` repo (`tools/rules-cli`, an unchanged copy of `packages/rules-cli`). This way they are queried with the same commands and the same skill. Neovim does not read `package.json` or `node_modules/`, because it only searches `lua/`, `plugin/` and the other folders of the runtimepath.
+The behavior rules use the same registry as the `mio` repo (`tools/rules-cli`, a copy of `packages/rules-cli`). This way they are queried with the same commands and the same skill. The copy adds one command, `area`, to rename an area or change its purpose and scope: `add` only writes those fields when it creates the area, and translating the registry to English needed it. Its messages are in English. Neovim does not read `package.json` or `node_modules/`, because it only searches `lua/`, `plugin/` and the other folders of the runtimepath.
 
 ## D-16 · gitsigns patch for files renamed against a base
 

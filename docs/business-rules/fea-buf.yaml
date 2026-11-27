@@ -1,6 +1,6 @@
 id: FEA-BUF
-name: Buffers abiertos
-purpose: Cuántos archivos quedan cargados a la vez y cuáles se cierran solos.
+name: Open buffers
+purpose: How many files stay loaded at once and which ones close by themselves.
 scope: buffers
 rules:
   - id: BR-8c75b69

@@ -82,7 +82,20 @@ YAML
 - Status must be `active`, `superseded` or `inactive`.
 - Always add `feature_name`, `feature_purpose` and `feature_scope` when creating a new area. Omit them for an existing one.
 - Rules are written in English; ids and statuses stay in English too.
-- The CLI cannot change the name, purpose or scope of an existing area: those fields are only written when the area is first created.
+- `add` only writes an area's name, purpose and scope when it creates the area. To change them later, use `rules:area`.
+
+## Rename an area
+
+```bash
+bun run rules:area << 'YAML'
+feature: FEA-XXX              # Required, must exist
+feature_name: New name        # Any of these three; the ones left out keep their value
+feature_purpose: What it covers.
+feature_scope: slug
+YAML
+```
+
+It changes only the area's fields; its rules and their ids stay as they are.
 
 ## Supersede, never rewrite history
 

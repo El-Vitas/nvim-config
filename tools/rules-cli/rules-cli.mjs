@@ -379,6 +379,37 @@ const cmdAdd = () => {
 };
 
 /**
+ * Updates the name, purpose or scope of an existing area, read as YAML from stdin:
+ * `feature` plus any of `feature_name`, `feature_purpose`, `feature_scope`. `add` only writes
+ * those fields when it creates the area, so this is the one way to change them. Rules are not touched.
+ */
+const cmdArea = () => {
+  const data = load(readFileSync('/dev/stdin', 'utf-8')) || {};
+  if (!data.feature) {
+    process.stderr.write('Missing the area to update: feature: FEA-XXX\n');
+    process.exit(1);
+  }
+
+  const db = getDb();
+  initDb(db);
+  const feature = db.prepare('SELECT id, name, purpose, scope FROM features WHERE id = ?').get(data.feature);
+  if (!feature) {
+    db.close();
+    process.stderr.write(`${data.feature} does not exist\n`);
+    process.exit(1);
+  }
+
+  db.prepare('UPDATE features SET name = ?, purpose = ?, scope = ? WHERE id = ?').run(
+    data.feature_name ?? feature.name,
+    data.feature_purpose ?? feature.purpose,
+    data.feature_scope ?? feature.scope,
+    data.feature,
+  );
+  db.close();
+  cmdDump();
+};
+
+/**
  * Deletes a rule that should never have existed (wrong feature id, accidental
  * duplicate, half-written submission). A rule that was merely wrong is replaced
  * with `supersedes` instead, which keeps the history.
@@ -389,7 +420,7 @@ const cmdDelete = (args) => {
   const opts = parseArgs(args);
   const ruleId = typeof opts.id === 'string' ? opts.id : null;
   if (ruleId === null) {
-    process.stderr.write('Falta decir qué regla se borra: --id BR-xxx\n');
+    process.stderr.write('Missing the rule to delete: --id BR-xxx\n');
     process.exit(1);
   }
 
@@ -399,17 +430,17 @@ const cmdDelete = (args) => {
   const rule = db.prepare('SELECT id, status, supersedes, superseded_by FROM rules WHERE id = ?').get(ruleId);
   if (!rule) {
     db.close();
-    process.stderr.write(`${ruleId} no existe\n`);
+    process.stderr.write(`${ruleId} does not exist\n`);
     process.exit(1);
   }
   if (rule.superseded_by) {
     db.close();
-    process.stderr.write(`${ruleId} ya fue reemplazada por ${rule.superseded_by}: es historia y se conserva\n`);
+    process.stderr.write(`${ruleId} was already superseded by ${rule.superseded_by}: it is history and is kept\n`);
     process.exit(1);
   }
   if (rule.supersedes) {
     db.close();
-    process.stderr.write(`${ruleId} reemplazó a ${rule.supersedes}: borrarla dejaría esa regla apuntando al vacío\n`);
+    process.stderr.write(`${ruleId} superseded ${rule.supersedes}: deleting it would leave that rule pointing at nothing\n`);
     process.exit(1);
   }
 
@@ -420,7 +451,7 @@ const cmdDelete = (args) => {
   tx();
   db.close();
 
-  process.stderr.write(`${ruleId} borrada\n`);
+  process.stderr.write(`${ruleId} deleted\n`);
   cmdDump();
 };
 
@@ -507,6 +538,9 @@ const main = () => {
       break;
     case 'delete':
       cmdDelete(args);
+      break;
+    case 'area':
+      cmdArea();
       break;
     default:
       help();

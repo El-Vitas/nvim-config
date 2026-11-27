@@ -1,7 +1,7 @@
 id: FEA-BUS
-name: Búsqueda
-purpose: Qué encuentran el buscador de archivos y la búsqueda de texto del proyecto.
-scope: busqueda
+name: Search
+purpose: What the file finder and the project text search find.
+scope: search
 rules:
   - id: BR-d7e16a8
     status: active
