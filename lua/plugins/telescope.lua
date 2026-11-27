@@ -2,35 +2,35 @@ return {
   "nvim-telescope/telescope.nvim",
   dependencies = {
     "nvim-lua/plenary.nvim",
-    -- Ordenador NATIVO (C, el algoritmo de fzf) en vez del sorter en Lua puro.
-    -- Se compila una vez con `make` al instalarlo.
+    -- NATIVE sorter (C, the fzf algorithm) instead of the pure Lua sorter.
+    -- It is compiled once with `make` on install.
     { "nvim-telescope/telescope-fzf-native.nvim", build = "make" },
   },
-  -- Se carga con el primer atajo o `:Telescope`, no en el arranque.
+  -- Loaded on the first keymap or `:Telescope`, not at startup.
   cmd = "Telescope",
   config = function()
     local telescope = require("telescope")
     telescope.setup({
       defaults = {
-        -- Esto hace que Telescope se vea un poco más moderno (estilo VS Code)
+        -- This makes Telescope look a bit more modern (VS Code style)
         path_display = { "truncate" },
       }
     })
-    -- Si la compilación falló (sin make/gcc), Telescope sigue con el sorter en
-    -- Lua, pero se avisa: si no, solo se nota como "Telescope está lento".
+    -- If the build failed (no make/gcc), Telescope keeps going with the Lua
+    -- sorter, but it warns: otherwise it only shows up as "Telescope is slow".
     local ok, err = pcall(telescope.load_extension, "fzf")
     if not ok then
       vim.notify("telescope-fzf-native not loaded, using the Lua sorter: " .. tostring(err), vim.log.levels.WARN)
     end
   end,
   keys = {
-    -- Pasan por config.hidden para leer el MISMO estado que `H` en Neo-tree.
-    -- Llamar a `Telescope find_files` pelado dejaría los dos desincronizados.
+    -- They go through config.hidden to read the SAME state as `H` in Neo-tree.
+    -- Calling a bare `Telescope find_files` would leave the two out of sync.
     { "<leader>ff", function() require("config.hidden").find_files() end, desc = "Find Files" },
     { "<leader>fg", function() require("config.hidden").live_grep() end, desc = "Live Grep" },
-    -- NUEVO: Ver errores/advertencias del LSP en todo el proyecto
+    -- NEW: View LSP errors/warnings across the whole project
     { "<leader>fd", "<cmd>Telescope diagnostics<cr>", desc = "LSP Diagnostics (Project)" },
-    -- OPCIONAL: Ver errores solo del archivo actual
+    -- OPTIONAL: View errors for the current file only
     { "<leader>fD", "<cmd>Telescope diagnostics bufnr=0<cr>", desc = "LSP Diagnostics (File)" },
   },
 }

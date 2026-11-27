@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Pruebas de la config que necesitan el editor completo. Cada una corre en un
-# repo temporal y con XDG_STATE_HOME temporal, para no pisar las sesiones ni la
-# base de review guardadas.
+# Config tests that need the full editor. Each one runs in a temporary repo with
+# a temporary XDG_STATE_HOME, so the saved sessions and the review database are
+# not overwritten.
 set -euo pipefail
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -15,22 +15,22 @@ git init -q -b main
 git config user.email test@test
 git config user.name test
 for i in $(seq 1 12); do
-  printf '# Sección %s\n\nTexto de la sección %s con una línea larga que ocupa espacio y se envuelve cuando la ventana es angosta.\n\n| a | b |\n|---|---|\n| %s | x |\n\n```lua\nprint(%s)\n```\n\n' "$i" "$i" "$i" "$i"
+  printf '# Section %s\n\nText of section %s with a long line that takes up a lot of space and wraps when the window is narrow.\n\n| a | b |\n|---|---|\n| %s | x |\n\n```lua\nprint(%s)\n```\n\n' "$i" "$i" "$i" "$i"
 done > doc.md
-printf '# Otro\n\nhola\n' > other.md
+printf '# Other\n\nhello\n' > other.md
 printf 'print(1)\n' > code.lua
 git add . && git commit -qm base
-# doc.md con cambios contra HEAD, para que el split de review arme el par.
-printf 'línea nueva\n' >> doc.md
+# doc.md with changes against HEAD, so the review split builds the pair.
+printf 'new line\n' >> doc.md
 
 status=0
 for t in mdpreview; do
   echo "── $t"
   code=0
   out="$(XDG_STATE_HOME="$tmp/state" timeout 120 nvim --headless -c "luafile $here/$t.lua" 2>&1)" || code=$?
-  printf '%s\n' "$out" | tr '\r' '\n' | grep -E '^(FALLA|ERROR|[a-z]+: ok=|mensajes:)' || true
+  printf '%s\n' "$out" | tr '\r' '\n' | grep -E '^(FAIL|ERROR|[a-z]+: ok=|messages:)' || true
   if [ "$code" -ne 0 ]; then
-    echo "   salió con código $code"
+    echo "   exited with code $code"
     status=1
   fi
 done

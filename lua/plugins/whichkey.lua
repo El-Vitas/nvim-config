@@ -3,8 +3,8 @@ return {
   event = "VeryLazy",
   opts = {
     preset = "modern",
-    -- Grupos con nombre para los prefijos de <leader>, y <leader>fn (archivo
-    -- nuevo), que solo vive acá.
+    -- Named groups for the <leader> prefixes, and <leader>fn (new
+    -- file), which only lives here.
     spec = {
       { "<leader>f", group = "find" },
       { "<leader>fn", "<cmd>enew<cr>", desc = "New File" },

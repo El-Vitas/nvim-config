@@ -1,42 +1,42 @@
--- Ver markdown renderizado SIN salir del buffer real.
+-- View rendered markdown WITHOUT leaving the real buffer.
 --
--- Misma filosofía que review-mode: todo son decoraciones (extmarks) sobre el
--- archivo verdadero — no hay buffer espejo ni tab nueva.
+-- Same philosophy as review-mode: everything is decorations (extmarks) over the
+-- real file — there is no mirror buffer or new tab.
 --
--- Dos teclas:
---   <leader>m  alterna renderizado (`md`) y markdown crudo (`raw`) en este buffer.
---              El buffer siempre se puede editar.
---   <leader>M  PREVIEW en dos columnas, crudo y renderizado, que se desplazan
---              juntas. Abre y cierra desde cualquiera de los dos paneles. Lo
---              maneja `config.mdpreview`.
+-- Two keys:
+--   <leader>m  toggles rendered (`md`) and raw markdown (`raw`) in this buffer.
+--              The buffer can always be edited.
+--   <leader>M  two-column PREVIEW, raw and rendered, that scroll
+--              together. Opens and closes from either panel. It is
+--              handled by `config.mdpreview`.
 --
--- Fuera de esos modos el intercambio es automático: en normal ves renderizado,
--- en insert ves el markdown crudo (`render_modes`), y la línea del cursor siempre
--- se muestra cruda (`anti_conceal`) para editar sin adivinar.
+-- Outside those modes the swap is automatic: in normal mode you see it rendered,
+-- in insert you see the raw markdown (`render_modes`), and the cursor line is always
+-- shown raw (`anti_conceal`) so you can edit without guessing.
 
--- ── Paleta ────────────────────────────────────────────────────────────────────
--- Los mismos tokens de lualine / neo-tree (config.palette), para que markdown
--- se sienta parte del tema y no un plugin pegado encima.
+-- ── Palette ───────────────────────────────────────────────────────────────────
+-- The same tokens as lualine / neo-tree (config.palette), so markdown
+-- feels part of the theme and not a plugin stuck on top.
 local c = require("config.palette")
--- Fondos: tintes oscuros del color de cada nivel. Suficiente contraste para leer
--- el texto encima, suficiente diferencia entre niveles para ver la jerarquía de
--- un vistazo sin tener que contar los `#`.
+-- Backgrounds: dark tints of each level's color. Enough contrast to read
+-- the text on top, enough difference between levels to see the hierarchy at
+-- a glance without having to count the `#`.
 local bg = {
-  h1     = "#33284d", -- morado
-  h2     = "#302a1c", -- dorado
-  h3     = "#22301f", -- verde
-  h4     = "#1e2a3d", -- azul
+  h1     = "#33284d", -- purple
+  h2     = "#302a1c", -- gold
+  h3     = "#22301f", -- green
+  h4     = "#1e2a3d", -- blue
   h5     = "#1e2e2c", -- teal
-  h6     = "#2e2233", -- rosa
-  code   = "#1b1d2b", -- caja de bloque de código
-  inline = "#2a2e42", -- `código inline`
+  h6     = "#2e2233", -- pink
+  code   = "#1b1d2b", -- code block box
+  inline = "#2a2e42", -- `inline code`
 }
 
--- Se aplican en cada carga y en cada cambio de colorscheme (un `:colorscheme`
--- limpia todos los grupos). Sin `default = true`: acá SÍ queremos ganarle a los
--- links por defecto del plugin, que apuntan a grupos de DIFF (H1Bg → DiffText,
--- H2Bg → DiffAdd, …) y por eso se veía revuelto y peleaba con los colores de
--- review-mode.
+-- Applied on every load and on every colorscheme change (a `:colorscheme`
+-- clears all groups). Without `default = true`: here we DO want to beat the
+-- plugin's default links, which point to DIFF groups (H1Bg → DiffText,
+-- H2Bg → DiffAdd, …) and so it looked messy and clashed with review-mode's
+-- colors.
 local function set_highlights()
   local hl = {
     RenderMarkdownH1 = { fg = c.purple, bold = true },
@@ -69,8 +69,8 @@ local function set_highlights()
     RenderMarkdownChecked = { fg = c.green },
     RenderMarkdownTodo = { fg = c.orange },
 
-    -- Tabla: encabezado dorado (mismo rol que el root de neo-tree), filas en fg,
-    -- bordes tenues para que la grilla estructure sin gritar.
+    -- Table: gold header (same role as neo-tree's root), rows in fg,
+    -- subtle borders so the grid gives structure without shouting.
     RenderMarkdownTableHead = { fg = c.gold, bold = true },
     RenderMarkdownTableRow = { fg = c.fg },
     MdTableBorder = { fg = c.dim },
@@ -87,26 +87,26 @@ local function set_highlights()
   end
 end
 
--- ── Tablas: renderer propio ───────────────────────────────────────────────────
--- `config.mdtable` reemplaza al renderer de tablas de render-markdown
--- (`pipe_table.enabled = false`, abajo). Maqueta por CELDA con virt_lines:
--- columnas de ancho fijo que entran en la ventana, wrap dentro de la celda,
--- bordes rectos en todas las líneas y un separador entre filas. Desde la 8.14,
--- render-markdown también parte celdas (`pipe_table.wrap`), pero no dibuja el
--- separador entre filas, que es lo que justifica mantener el renderer propio.
--- En un archivo con tablas la grilla apaga el wrap de la ventana; sin tablas,
--- tu preferencia de <leader>w queda como está.
+-- ── Tables: custom renderer ───────────────────────────────────────────────────
+-- `config.mdtable` replaces render-markdown's table renderer
+-- (`pipe_table.enabled = false`, below). It lays out per CELL with virt_lines:
+-- fixed-width columns that fit in the window, wrap inside the cell,
+-- straight borders on every line and a separator between rows. Since 8.14,
+-- render-markdown also splits cells (`pipe_table.wrap`), but it does not draw the
+-- separator between rows, which is what justifies keeping the custom renderer.
+-- In a file with tables the grid turns off the window's wrap; without tables,
+-- your <leader>w preference stays as it is.
 
 -- ── md ↔ raw ──────────────────────────────────────────────────────────────────
 local function md_toggle()
   vim.cmd("RenderMarkdown buf_toggle")
-  -- La grilla de tablas es propia (config.mdtable) y también tiene que
-  -- apagarse o volver: el toggle no dispara ningún evento que la refresque.
+  -- The table grid is custom (config.mdtable) and also has to
+  -- turn off or come back: the toggle fires no event that would refresh it.
   require("config.mdtable").refresh()
 end
 
--- ── PREVIEW en dos columnas ───────────────────────────────────────────────────
--- Propio y no el de render-markdown: ver config/mdpreview.lua y D-22.
+-- ── Two-column PREVIEW ────────────────────────────────────────────────────────
+-- Custom and not render-markdown's: see config/mdpreview.lua and D-22.
 local function preview_toggle()
   require("config.mdpreview").toggle()
 end
@@ -124,29 +124,29 @@ return {
       { "<leader>M", preview_toggle,  ft = "markdown", desc = "Markdown: preview split (toggle)" },
     },
     opts = {
-      -- Sacar 'i' de acá es lo que produce "en insert veo el crudo".
-      -- Incluye los modos VISUALES ("v" charwise, "V" linewise, "\22" bloque).
-      -- Sin ellos, seleccionar varias líneas apagaba el render de golpe y todo
-      -- el documento saltaba a markdown crudo mientras seleccionabas. Solo
-      -- insert queda fuera: ahí sí quieres ver los caracteres reales que editas.
+      -- Leaving 'i' out of here is what produces "in insert I see the raw text".
+      -- It includes the VISUAL modes ("v" charwise, "V" linewise, "\22" block).
+      -- Without them, selecting several lines turned the render off all at once and the whole
+      -- document jumped to raw markdown while you selected. Only
+      -- insert is left out: there you do want to see the real characters you edit.
       render_modes = { "n", "c", "t", "v", "V", "\22" },
       anti_conceal = { enabled = true },
 
-      -- Sin signos en la columna: ese espacio ya lo usan gitsigns y el
-      -- statuscolumn de review-mode (corchetes de comentarios). Meter más ahí
-      -- sería pelear por el mismo pixel.
+      -- No signs in the column: that space is already used by gitsigns and
+      -- review-mode's statuscolumn (comment brackets). Adding more there
+      -- would be fighting over the same pixel.
       sign = { enabled = false },
 
       heading = {
-        -- `block` = el fondo abraza el título, no sangra hasta el borde de la
-        -- ventana. `min_width` decreciente da una escala visual: H1 es una barra
-        -- ancha, H3 en adelante son chips cortos.
+        -- `block` = the background hugs the title, it does not bleed to the edge of the
+        -- window. A decreasing `min_width` gives a visual scale: H1 is a wide
+        -- bar, H3 onwards are short chips.
         width = "block",
         min_width = { 60, 50, 40, 0, 0, 0 },
         left_pad = 1,
         right_pad = 2,
-        -- Barras ▄▀ arriba y abajo solo en H1/H2 → se leen como secciones.
-        -- `border_virtual` las dibuja sin exigir líneas en blanco en el archivo.
+        -- ▄▀ bars above and below only on H1/H2 → they read as sections.
+        -- `border_virtual` draws them without requiring blank lines in the file.
         border = { true, true, false, false, false, false },
         border_virtual = true,
         icons = { "󰲡 ", "󰲣 ", "󰲥 ", "󰲧 ", "󰲩 ", "󰲫 " },
@@ -159,8 +159,8 @@ return {
         left_pad = 2,
         right_pad = 2,
         border = "thick",
-        -- Nombre + icono del lenguaje a la DERECHA: no empuja el código ni
-        -- compite con la primera línea.
+        -- Language name + icon on the RIGHT: it does not push the code or
+        -- compete with the first line.
         position = "right",
         language_icon = true,
         language_name = true,
@@ -168,7 +168,7 @@ return {
         inline_pad = 1,
       },
 
-      -- Tablas: las dibuja `config.mdtable` (ver "Tablas: renderer propio").
+      -- Tables: drawn by `config.mdtable` (see "Tables: custom renderer").
       pipe_table = { enabled = false },
 
       bullet = { icons = { "●", "○", "◆", "◇" }, right_pad = 1 },
@@ -176,13 +176,13 @@ return {
       dash = { icon = "─", width = "full" },
       link = { wiki = { icon = "󱗖 " } },
 
-      -- Guías de indentación: dan estructura a las listas anidadas largas.
+      -- Indent guides: they give structure to long nested lists.
       indent = { enabled = true, per_level = 2, skip_level = 1, icon = "▎" },
     },
     config = function(_, opts)
       require("render-markdown").setup(opts)
       set_highlights()
-      require("config.mdtable").setup() -- grilla de tablas (reemplaza pipe_table)
+      require("config.mdtable").setup() -- table grid (replaces pipe_table)
       vim.api.nvim_create_autocmd("ColorScheme", {
         group = vim.api.nvim_create_augroup("RenderMarkdownPalette", { clear = true }),
         callback = set_highlights,

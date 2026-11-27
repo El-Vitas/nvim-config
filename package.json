@@ -3,13 +3,14 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Herramientas de documentación de la config de Neovim (registro de reglas de negocio). Neovim no usa este archivo.",
+  "description": "Documentation tooling for the Neovim config (the behavior rules registry). Neovim does not use this file.",
   "scripts": {
     "rules:build": "bun tools/rules-cli/rules-cli.mjs build",
     "rules:query": "bun tools/rules-cli/rules-cli.mjs query",
     "rules:add": "bun tools/rules-cli/rules-cli.mjs add",
     "rules:dump": "bun tools/rules-cli/rules-cli.mjs dump",
     "rules:delete": "bun tools/rules-cli/rules-cli.mjs delete",
+    "rules:area": "bun tools/rules-cli/rules-cli.mjs area",
     "rules:clean": "bun tools/rules-cli/clean-history.mjs"
   },
   "dependencies": {

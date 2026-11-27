@@ -29,7 +29,7 @@ Sibling repos in `~/Dev/nvim`: `review-mode/` (review plugin, published as `El-V
 ## Repo rules
 
 - **Files.** Every change to a file is made with the editing tools, file by file. Never with `sed -i`, heredocs, `python -c` or redirections. The rules CLI and lazy (which rewrites `lazy-lock.json`) are the only tools that write files of the repo.
-- **Language.** Commit messages, docs, `README.md` and the text the user sees inside Neovim (notifications, cheatsheet) are in English. Code comments stay in neutral Spanish, with no voseo and no regional idioms.
+- **Language.** Everything in the repo is in English: code comments, test names, commit messages, docs, rules, `README.md` and the text the user sees inside Neovim (notifications, cheatsheet).
 - **Comments.** They explain the why, in the present tense. History and measurements go in `docs/decisions.md`. Details in the `code-comments` skill.
 - **Prose.** Docs, rules and commit bodies follow the `vitas-writing` skill.
 - **Git.** `git-flow` skill: always git flow (branch from `develop`, PR to `develop`, `develop` → `main`), never `git add .`, commit and push only when the owner asks, no co-author trailers.

@@ -1,7 +1,7 @@
 id: FEA-COM
-name: Comentarios de review
-purpose: Cómo se crean, editan, resuelven y guardan los comentarios de revisión, incluidos los que agrega el agente.
-scope: review-comentarios
+name: Review comments
+purpose: How review comments are created, edited, resolved and saved, including the ones the agent adds.
+scope: review-comments
 rules:
   - id: BR-0d4e8ee
     status: active

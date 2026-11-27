@@ -59,7 +59,7 @@ The ● queries a set of visible files that is built once per render (`before_re
 
 ## D-04 · The ignored-files check of `hidden.lua` is asynchronous
 
-`lua/config/hidden.lua`, function `asegurar_filtro`.
+`lua/config/hidden.lua`, function `ensure_filter`.
 
 On the first render, neo-tree has not yet marked the ignored files and shows them. `hidden.lua` verifies the result against git (`git check-ignore --stdin` with the visible paths) and navigates again if any remain, with a cap of 6 attempts. The check waited for git with `:wait()` after every render, including renders of the changes tree, which has no ignored files to filter.
 
@@ -145,7 +145,7 @@ nvim-scrollbar warned on every startup that on 2026-11-16 its `main` moves to v2
 
 ## D-15 · Rules documentation with the `mio` CLI
 
-The behavior rules use the same registry as the `mio` repo (`tools/rules-cli`, an unchanged copy of `packages/rules-cli`). This way they are queried with the same commands and the same skill. Neovim does not read `package.json` or `node_modules/`, because it only searches `lua/`, `plugin/` and the other folders of the runtimepath.
+The behavior rules use the same registry as the `mio` repo (`tools/rules-cli`, a copy of `packages/rules-cli`). This way they are queried with the same commands and the same skill. The copy adds one command, `area`, to rename an area or change its purpose and scope: `add` only writes those fields when it creates the area, and translating the registry to English needed it. Its messages are in English. Neovim does not read `package.json` or `node_modules/`, because it only searches `lua/`, `plugin/` and the other folders of the runtimepath.
 
 ## D-16 · gitsigns patch for files renamed against a base
 

@@ -1,7 +1,7 @@
 return {
   {
     "hrsh7th/nvim-cmp",
-    -- El autocompletado solo hace falta al escribir: no se carga en el arranque.
+    -- Autocompletion is only needed while typing: it is not loaded at startup.
     event = "InsertEnter",
     dependencies = {
       "hrsh7th/cmp-nvim-lsp",
@@ -12,15 +12,15 @@ return {
       local lspkind = require("lspkind")
       local kinds = require("cmp.types").lsp.CompletionItemKind
 
-      -- Quita espacios al inicio y al final del texto de cada entrada.
+      -- Strips leading and trailing whitespace from the text of each entry.
       local function trim(s)
         return s:match("^%s*(.-)%s*$")
       end
 
       cmp.setup({
-        -- Snippets del LSP con el motor NATIVO de Neovim (`vim.snippet`). Antes
-        -- se usaba LuaSnip, pero no había ningún snippet propio cargado: solo
-        -- expandía los del LSP, que es justo lo que `vim.snippet` ya hace.
+        -- LSP snippets with Neovim's NATIVE engine (`vim.snippet`). LuaSnip used
+        -- to be used, but no custom snippets were loaded: it only
+        -- expanded the LSP ones, which is exactly what `vim.snippet` already does.
         snippet = {
           expand = function(args) vim.snippet.expand(args.body) end,
         },
@@ -29,10 +29,10 @@ return {
           completion = {
             border = "rounded",
             scrollbar = true,
-            -- 1. ALTURA LIMITADA A 12 OPCIONES
+            -- 1. HEIGHT LIMITED TO 12 OPTIONS
             max_height = 12, 
             winhighlight = "Normal:NormalFloat,FloatBorder:FloatBorder,CursorLine:PmenuSel,Search:None",
-            side_padding = 0, -- Menos espacio lateral para que se vea más chico
+            side_padding = 0, -- Less side space so it looks smaller
             col_offset = -3,
           },
           documentation = {
@@ -62,20 +62,20 @@ return {
           },
         }),
 
-        -- 2. FORMATO COMPACTO (Letras "más pequeñas" visualmente)
+        -- 2. COMPACT FORMAT (visually "smaller" text)
         formatting = {
           fields = { "kind", "abbr", "menu" },
           format = lspkind.cmp_format({
-            mode = 'symbol', -- Solo icono para ahorrar espacio horizontal
-            maxwidth = 35,    -- Ventana más estrecha
+            mode = 'symbol', -- Icon only to save horizontal space
+            maxwidth = 35,    -- Narrower window
             ellipsis_char = '...',
             before = function(entry, vim_item)
-              -- Reducimos el nombre de la fuente a algo mínimo
+              -- Shrink the source name to a minimum
               vim_item.menu = ({
                 nvim_lsp = "LSP",
               })[entry.source.name]
               
-              -- Limpieza de espacios extras en el nombre
+              -- Clean up extra spaces in the name
               vim_item.abbr = trim(vim_item.abbr)
               
               return vim_item

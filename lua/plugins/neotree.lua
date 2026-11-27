@@ -1,6 +1,6 @@
--- ── Iconos de carpeta por NOMBRE, nf-md-folder-* (line-art, nítidos en 1 color) ──
--- Nerd Font nativa (NO fuente parcheada). Color por tipo vía highlights ReviewMat*
--- (definidos en onedarkpro). Archivos vía nvim-web-devicons.
+-- ── Folder icons by NAME, nf-md-folder-* (line-art, crisp in 1 color) ──
+-- Native Nerd Font (NOT a patched font). Color per type via ReviewMat* highlights
+-- (defined in onedarkpro). Files via nvim-web-devicons.
 local MAT_HL = {
   blue = "ReviewMatBlue", green = "ReviewMatGreen", yellow = "ReviewMatYellow",
   red = "ReviewMatRed", purple = "ReviewMatPurple", orange = "ReviewMatOrange",
@@ -51,12 +51,12 @@ do
   end
 end
 
--- Mapa Material (PUA, fuente MaterialFolders con color). Se carga en el PRIMER
--- render de una carpeta y no al leer este spec: son ~4600 líneas (~9 ms) que
--- antes se pagaban en cada arranque aunque el árbol nunca se abriera.
--- `false` = no está disponible → se usan los nf-md de FOLDER_ICONS (arriba).
--- Sin la fuente instalada los glifos PUA salen como cuadros vacíos, así que el mapa solo se usa si
--- MaterialFolders.ttf está en una carpeta de fuentes (install.sh la copia a ~/.local/share/fonts).
+-- Material map (PUA, MaterialFolders font with color). Loaded on the FIRST
+-- folder render instead of when this spec is read: it is ~4600 lines (~9 ms) that
+-- used to be paid on every startup even if the tree was never opened.
+-- `false` = not available → the nf-md icons from FOLDER_ICONS (above) are used.
+-- Without the font installed the PUA glyphs show up as empty boxes, so the map is only used if
+-- MaterialFolders.ttf is in a font folder (install.sh copies it to ~/.local/share/fonts).
 local FONT_FILE = "MaterialFolders.ttf"
 local FONT_DIRS = { "~/.local/share/fonts", "~/.fonts", "~/Library/Fonts", "/usr/share/fonts", "/usr/local/share/fonts" }
 
@@ -76,17 +76,17 @@ local function material_folders()
   return MF
 end
 
--- Provider terminal-aware:
---  • Ghostty → iconos Material 2-color (COLR, cerrado/abierto), SIN forzar highlight
---    (la fuente trae sus propios colores).
---  • alacritty/otros → nf-md line-art (1 color por tipo vía highlight).
---  • ARCHIVOS → nvim-web-devicons siempre.
+-- Terminal-aware provider:
+--  • Ghostty → Material 2-color icons (COLR, closed/open), WITHOUT forcing a highlight
+--    (the font brings its own colors).
+--  • alacritty/others → nf-md line-art (1 color per type via highlight).
+--  • FILES → always nvim-web-devicons.
 local function icon_provider(icon, node, state)
   if node.type == "directory" then
     local MF = material_folders()
     if MF then
-      -- Iconos Material CBDT (color). Funcionan en ghostty y (vía fallback CBDT,
-      -- como los emoji) también en alacritty. La fuente MaterialFolders trae el color.
+      -- Material CBDT icons (color). They work in ghostty and (via CBDT fallback,
+      -- like emoji) in alacritty too. The MaterialFolders font brings the color.
       local e = MF.names[(node.name or ""):lower()] or MF.default
       local ok_exp, expanded = pcall(function() return node:is_expanded() end)
       icon.text = (ok_exp and expanded and e.o) or e.c
@@ -111,10 +111,10 @@ local function icon_provider(icon, node, state)
   return icon
 end
 
--- ¿El archivo está VISIBLE en alguna ventana ahora? (para el ● de "abiertos").
--- El set de archivos visibles se arma una vez por render (`before_render` y el
--- redraw lo regeneran) en vez de recorrer todos los buffers por cada archivo del
--- árbol: con 1 400 nodos y 60 buffers eran 5 ms por render.
+-- Is the file VISIBLE in any window right now? (for the ● of "open" files).
+-- The set of visible files is built once per render (`before_render` and the
+-- redraw regenerate it) instead of walking all buffers for every file in the
+-- tree: with 1 400 nodes and 60 buffers that took 5 ms per render.
 local open_files
 local function collect_open_files()
   open_files = {}
@@ -128,10 +128,10 @@ local function file_is_open(path)
   return open_files[path] == true
 end
 
--- Vía ÚNICA para abrir/revelar/mostrar neo-tree respetando la base de review:
--- delega en review.neotree_exec (que inyecta git_base en los dos modos del
--- árbol, cambios y archivos). Fallback a command.execute directo si review no está disponible.
--- TODO open/reveal/toggle del árbol debe pasar por acá — así ninguno ignora la base.
+-- The ONLY way to open/reveal/show neo-tree while honoring the review base:
+-- it delegates to review.neotree_exec (which injects git_base into both tree
+-- modes, changes and files). Falls back to command.execute directly if review is not available.
+-- EVERY open/reveal/toggle of the tree must go through here, so none ignores the base.
 local function nt_exec(exec)
   local ok, review = pcall(require, "review")
   if ok and type(review.neotree_exec) == "function" and review.neotree_exec(exec) then
@@ -141,10 +141,10 @@ local function nt_exec(exec)
   if ok2 then command.execute(exec) end
 end
 
--- ── Persistencia del sidebar (source + carpetas abiertas) por proyecto ──────
--- Guardamos, por raíz de repo/cwd, qué source estaba abierto (filesystem /
--- git_status) y qué carpetas tenías expandidas, para restaurarlo al abrir nvim.
--- Raíz de proyecto cacheada por cwd (evita `git rev-parse` repetido).
+-- ── Sidebar persistence (source + open folders) per project ──────
+-- We store, per repo root/cwd, which source was open (filesystem /
+-- git_status) and which folders were expanded, to restore it when opening nvim.
+-- Project root cached per cwd (avoids repeated `git rev-parse`).
 local _root_cache = {}
 local function project_root()
   local cwd = vim.fn.getcwd()
@@ -161,7 +161,7 @@ local function sidebar_state_file()
   return vim.fn.stdpath("state") .. "/neotree-sidebar/" .. key .. ".json"
 end
 
--- Devuelve la ventana neo-tree visible (si hay) y su source.
+-- Returns the visible neo-tree window (if any) and its source.
 local function find_neotree_win()
   for _, w in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
     local b = vim.api.nvim_win_get_buf(w)
@@ -172,9 +172,9 @@ local function find_neotree_win()
   end
 end
 
--- Guarda el estado del sidebar SOLO al salir (VimLeavePre): si hay un árbol
--- abierto, su source + carpetas expandidas; si no, marca open=false para NO
--- reabrirlo la próxima vez. (Sin costo por-render.)
+-- Saves the sidebar state ONLY on exit (VimLeavePre): if a tree is open,
+-- its source + expanded folders; otherwise it sets open=false so it is NOT
+-- reopened next time. (No per-render cost.)
 local function save_sidebar()
   local _, src = find_neotree_win()
   local data = { open = false }
@@ -198,8 +198,8 @@ local function save_sidebar()
   fd:write(vim.json.encode(data)); fd:close()
 end
 
--- Reabre el sidebar como estaba, solo si estaba ABIERTO al salir y el estado
--- guardado corresponde a este proyecto.
+-- Reopens the sidebar as it was, only if it was OPEN on exit and the saved
+-- state belongs to this project.
 local function restore_sidebar()
   local fd = io.open(sidebar_state_file(), "r")
   if not fd then return end
@@ -209,24 +209,24 @@ local function restore_sidebar()
   if data.root and data.root ~= project_root() then return end
   local ok_mgr, mgr = pcall(require, "neo-tree.sources.manager")
   if not ok_mgr then return end
-  -- Pre-cargar las carpetas a expandir (el source filesystem honra
-  -- state.force_open_folders en fs_scan).
+  -- Preload the folders to expand (the filesystem source honors
+  -- state.force_open_folders in fs_scan).
   local st = mgr.get_state(data.source)
   if st and data.folders and #data.folders > 0 then
     st.force_open_folders = data.folders
   end
-  -- Vía única: respeta la base (git_base) si el source es git_status.
+  -- Single path: honors the base (git_base) if the source is git_status.
   nt_exec({ source = data.source, action = "show", position = "right" })
 end
 
--- El source git_status ("changed", <leader>s) corre `git status` SINCRÓNICO con
--- `--untracked-files=all --ignored=traditional`. Con esa combinación git lista
--- CADA archivo ignorado (todo node_modules): en FastCase son 571 230 líneas que
--- neo-tree parsea en Lua → ~4,5 s de bloqueo al abrir el árbol de cambios.
--- Esa vista nunca muestra ignorados (sources/git_status/lib/items.lua descarta el
--- estado "!"), así que se le pide a git que no los liste. Solo se toca esa
--- llamada (la única con `--untracked-files=all`): el árbol de archivos usa sus
--- propias llamadas y sigue ocultando los gitignorados como siempre.
+-- The git_status source ("changed", <leader>s) runs `git status` SYNCHRONOUSLY with
+-- `--untracked-files=all --ignored=traditional`. With that combination git lists
+-- EVERY ignored file (all of node_modules): in FastCase that is 571 230 lines that
+-- neo-tree parses in Lua → ~4.5 s of blocking when opening the changes tree.
+-- That view never shows ignored files (sources/git_status/lib/items.lua drops the
+-- "!" status), so git is asked not to list them. Only that call is touched
+-- (the only one with `--untracked-files=all`): the file tree uses its own
+-- calls and keeps hiding gitignored files as usual.
 local function skip_ignored_in_changes(args)
   local a = args and args.status_args
   if not (a and vim.tbl_contains(a, "--untracked-files=all")) then return end
@@ -235,9 +235,9 @@ local function skip_ignored_in_changes(args)
   end
 end
 
--- Fondo MORADO del archivo ACTUAL a nivel de LÍNEA (extmark line_hl_group, solo
--- bg): se COMBINA con el color del texto (los amarillos de git se mantienen), a
--- diferencia del highlight del componente `name` que lo reemplazaba (→ blanco).
+-- PURPLE background of the CURRENT file at LINE level (extmark line_hl_group, bg
+-- only): it COMBINES with the text color (git yellows are kept), unlike the
+-- highlight of the `name` component, which replaced it (→ white).
 local cur_file_ns = vim.api.nvim_create_namespace("neotree_current_file")
 
 local function mark_current_file(state)
@@ -246,8 +246,8 @@ local function mark_current_file(state)
   vim.api.nvim_buf_clear_namespace(buf, cur_file_ns, 0, -1)
   local cur = vim.g.neotree_current_file
   if not cur or cur == "" or not state.tree then return end
-  -- Búsqueda por id (el id de un archivo es su path): NuiTree devuelve también
-  -- su línea, sin recorrer el árbol. Sin línea = el nodo no está a la vista.
+  -- Lookup by id (a file's id is its path): NuiTree also returns its line,
+  -- without walking the tree. No line = the node is not in view.
   local ok, node, linenr = pcall(state.tree.get_node, state.tree, cur)
   if ok and node and node.type == "file" and linenr then
     pcall(vim.api.nvim_buf_set_extmark, buf, cur_file_ns, linenr - 1, 0,
@@ -255,9 +255,9 @@ local function mark_current_file(state)
   end
 end
 
--- <leader>e: toggle que CONSERVA el modo. Si hay un árbol visible, recuerda su
--- source (filesystem / git_status) y lo cierra; si no, reabre EXACTAMENTE ese
--- source. Así <leader>e nunca cambia de "changed git" a normal por su cuenta.
+-- <leader>e: toggle that KEEPS the mode. If a tree is visible, it remembers its
+-- source (filesystem / git_status) and closes it; otherwise it reopens EXACTLY that
+-- source. So <leader>e never switches from "changed git" to normal on its own.
 local function toggle_tree()
   local win, src = find_neotree_win()
   if win then
@@ -265,16 +265,16 @@ local function toggle_tree()
     vim.cmd("Neotree close")
     return
   end
-  -- Vía única (nt_exec): si reabrimos git_status, respeta la base de review
-  -- (git_base). Antes usaba `Neotree action=show` (string, sin git_base) →
-  -- reabría en git status plano ignorando la base. ESE era el bug.
+  -- Single path (nt_exec): if we reopen git_status, it honors the review base
+  -- (git_base). It used to use `Neotree action=show` (string, no git_base) →
+  -- it reopened in plain git status ignoring the base. THAT was the bug.
   nt_exec({ source = vim.g.neotree_last_source or "filesystem", action = "show", position = "right" })
 end
 
--- <leader>E: revelar el archivo actual en el árbol, RESPETANDO el source abierto:
--- - en git_status (changed): revela solo si el archivo está entre los cambios;
---   si no, no hace nada (no cambia de modo).
--- - en filesystem (o cerrado): revela normal.
+-- <leader>E: reveal the current file in the tree, HONORING the open source:
+-- - in git_status (changed): reveals only if the file is among the changes;
+--   otherwise it does nothing (does not change mode).
+-- - in filesystem (or closed): reveals normally.
 local function reveal_in_tree()
   local file = vim.api.nvim_buf_get_name(0)
   if file == "" or vim.bo.buftype ~= "" then return end
@@ -282,8 +282,8 @@ local function reveal_in_tree()
   src = src or vim.g.neotree_last_source or "filesystem"
   if src == "git_status" then
     local dir = vim.fn.fnamemodify(file, ":h")
-    -- "cambiado" = working tree (git status) O vs la base efectiva de review
-    -- (git diff base), para coincidir con lo que muestra el sidebar.
+    -- "changed" = working tree (git status) OR vs the effective review base
+    -- (git diff base), to match what the sidebar shows.
     local ok_r, review = pcall(require, "review")
     local base_commit = ok_r and review.effective_base and review.effective_base() or nil
     local changed = false
@@ -295,11 +295,11 @@ local function reveal_in_tree()
     end
     if not changed then
       vim.notify("review: file not in changes vs base", vim.log.levels.INFO)
-      return -- no está en los cambios → no hacer nada, no cambiar de modo
+      return -- not in the changes → do nothing, do not change mode
     end
   end
-  -- Vía única: reveal respetando la base (nt_exec inyecta git_base para
-  -- git_status → el árbol sigue mostrando el diff vs el commit, no el plano).
+  -- Single path: reveal honoring the base (nt_exec injects git_base for
+  -- git_status → the tree keeps showing the diff vs the commit, not the plain one).
   nt_exec({ action = "reveal", source = src, position = "right", reveal_file = file })
 end
 
@@ -307,11 +307,11 @@ return {
   {
     "nvim-neo-tree/neo-tree.nvim",
     branch = "v3.x",
-    -- Al arranque: `hijack_netrw_behavior` (abrir `nvim .`) y la restauración del
-    -- sidebar necesitan neo-tree cargado antes del primer buffer.
+    -- At startup: `hijack_netrw_behavior` (opening `nvim .`) and the sidebar
+    -- restore need neo-tree loaded before the first buffer.
     lazy = false,
-    -- Registramos el componente custom `opened_marker` en el módulo COMÚN de
-    -- componentes (así lo encuentran todos los sources: filesystem, git_status…).
+    -- We register the custom `opened_marker` component in the COMMON components
+    -- module (so every source finds it: filesystem, git_status…).
     config = function(_, opts)
       require("neo-tree.sources.common.components").opened_marker = function(_, node)
         if node.type == "file" and file_is_open(node:get_id()) then
@@ -321,12 +321,12 @@ return {
       end
       require("neo-tree").setup(opts)
 
-      -- PARCHE base-aware: neo-tree cachea el texto de `git status` y, cuando NO
-      -- cambió (p. ej. al reabrir el árbol), `git.status` corta camino y devuelve
-      -- SOLO el status plano, sin el diff-vs-base (3er valor nil) → los archivos
-      -- nuevos/cambiados vs la base DESAPARECEN del árbol al reabrir. Wrap que
-      -- rellena ese 3er valor desde el status_diff guardado (o lo recomputa), para
-      -- que el árbol de cambios sea CONSISTENTE en todo open/reveal/reopen.
+      -- Base-aware PATCH: neo-tree caches the `git status` text and, when it did NOT
+      -- change (e.g. when reopening the tree), `git.status` short-circuits and returns
+      -- ONLY the plain status, without the diff-vs-base (3rd value nil) → files
+      -- new/changed vs the base DISAPPEAR from the tree on reopen. A wrapper that
+      -- fills in that 3rd value from the saved status_diff (or recomputes it), so
+      -- the changes tree is CONSISTENT across every open/reveal/reopen.
       pcall(function()
         local git = require("neo-tree.git")
         if type(git.status) ~= "function" or git.__review_status_patched then return end
@@ -350,8 +350,8 @@ return {
       end)
 
       local grp = vim.api.nvim_create_augroup("NeoTreeOpenedRefresh", { clear = true })
-      -- Recordar el archivo actual (el último buffer real enfocado) para pintarle
-      -- el fondo morado en el árbol, aunque después el foco pase a neo-tree.
+      -- Remember the current file (the last real focused buffer) to paint its
+      -- purple background in the tree, even if focus later moves to neo-tree.
       vim.api.nvim_create_autocmd("BufEnter", {
         group = grp,
         callback = function(a)
@@ -362,9 +362,9 @@ return {
         end,
       })
 
-      -- Persistencia del sidebar: guardar al salir, restaurar cuando el arranque
-      -- se asentó (diferido ~120ms para no competir con la restauración de la
-      -- sesión / LSP / treesitter, que es lo que hace sentir lento el inicio).
+      -- Sidebar persistence: save on exit, restore once startup has settled
+      -- (deferred ~120ms so it does not compete with session / LSP / treesitter
+      -- restore, which is what makes startup feel slow).
       vim.api.nvim_create_autocmd("VimLeavePre", {
         group = grp,
         callback = save_sidebar,
@@ -378,17 +378,17 @@ return {
         vim.api.nvim_create_autocmd("VimEnter", { group = grp, once = true, callback = restore_soon })
       end
 
-      -- Repintar el árbol al abrir/cerrar ventanas para que los `●` reflejen los
-      -- paneles visibles AHORA. neo-tree solo re-renderiza cuando se agrega o
-      -- borra un buffer: al cerrar un split el buffer sigue cargado (oculto) y
-      -- su `●` quedaba pegado.
+      -- Repaint the tree when windows open/close so the `●` reflect the panels
+      -- visible NOW. neo-tree only re-renders when a buffer is added or
+      -- deleted: when a split is closed the buffer stays loaded (hidden) and
+      -- its `●` stayed stuck.
       --
-      -- Es un REDRAW (re-pinta los nodos que ya hay, sin escanear disco ni correr
-      -- git). Antes había un `Neotree refresh`, que no es un argumento válido de
-      -- `:Neotree`: fallaba en silencio (pcall) después de correr un `git
-      -- rev-parse` sincrónico, y nunca refrescaba nada.
-      -- DEBOUNCED con un solo temporizador: una ráfaga de eventos (p. ej.
-      -- restaurar una sesión) colapsa en un único repintado.
+      -- It is a REDRAW (repaints the nodes already there, without scanning disk or running
+      -- git). There used to be a `Neotree refresh`, which is not a valid argument of
+      -- `:Neotree`: it failed silently (pcall) after running a synchronous `git
+      -- rev-parse`, and never refreshed anything.
+      -- DEBOUNCED with a single timer: a burst of events (e.g.
+      -- restoring a session) collapses into a single repaint.
       local redraw_timer = assert(vim.uv.new_timer())
       local function redraw_tree()
         local _, src = find_neotree_win()
@@ -400,11 +400,11 @@ return {
         if not (st and st.tree) then return end
         collect_open_files()
         renderer.redraw(st)
-        mark_current_file(st) -- redraw no emite after_render
+        mark_current_file(st) -- redraw does not emit after_render
       end
       local redraw_soon = vim.schedule_wrap(redraw_tree)
-      -- Las ventanas flotantes (Telescope, peek, modales) no cuentan como
-      -- "abierto en un panel": no disparan repintados del árbol.
+      -- Floating windows (Telescope, peek, modals) do not count as
+      -- "open in a panel": they do not trigger tree repaints.
       local function is_float(win)
         return win and vim.api.nvim_win_is_valid(win) and vim.api.nvim_win_get_config(win).relative ~= ""
       end
@@ -418,10 +418,10 @@ return {
         end,
       })
 
-      -- neo-tree solo recalcula el diff contra la base de review cuando cambia
-      -- el texto de `git status`. Un `git checkout` o un commit hechos afuera con
-      -- el árbol limpio no lo cambian, y el árbol mostraba el diff de la rama
-      -- anterior: al volver el foco se descarta ese diff y se recalcula al abrir.
+      -- neo-tree only recomputes the diff against the review base when the
+      -- `git status` text changes. A `git checkout` or a commit made outside with
+      -- a clean tree does not change it, and the tree showed the previous
+      -- branch's diff: when focus returns that diff is discarded and recomputed on open.
       vim.api.nvim_create_autocmd("FocusGained", {
         group = grp,
         callback = function()
@@ -442,16 +442,16 @@ return {
       { "<leader>e", toggle_tree, desc = "Toggle file explorer (keeps source)" },
       { "<leader>E", reveal_in_tree, desc = "Reveal current file in tree (keeps source)" },
     },
-    -- AUTO-CIERRE: si SOLO queda la ventana neo-tree, no dejarla sola. Endurecido:
-    --  • ignora ventanas FLOTANTES (modales/peek) → nunca cierra bajo un modal;
-    --  • si hay OTROS tabs, cierra solo esa ventana/tab (no mata todo nvim);
-    --  • en la última tab sí cierra nvim (intención original);
-    --  • deferred + guard de arranque → no dispara en estados transitorios ni en `nvim .`.
+    -- AUTO-CLOSE: if ONLY the neo-tree window is left, do not leave it alone. Hardened:
+    --  • ignores FLOATING windows (modals/peek) → never closes under a modal;
+    --  • if there are OTHER tabs, it closes only that window/tab (does not kill all of nvim);
+    --  • on the last tab it does close nvim (original intent);
+    --  • deferred + startup guard → does not fire in transient states or on `nvim .`.
     init = function()
       vim.api.nvim_create_autocmd("BufEnter", {
         group = vim.api.nvim_create_augroup("NeoTreeAutoClose", { clear = true }),
         callback = function()
-          if vim.v.vim_did_enter == 0 then return end -- no durante el arranque
+          if vim.v.vim_did_enter == 0 then return end -- not during startup
           vim.schedule(function()
             local normal, has_float = {}, false
             for _, w in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
@@ -463,12 +463,12 @@ return {
                 end
               end
             end
-            if has_float then return end -- hay un modal/peek flotante → no tocar
+            if has_float then return end -- a floating modal/peek is open → do not touch
             if #normal == 1 and vim.bo[vim.api.nvim_win_get_buf(normal[1])].filetype == "neo-tree" then
               if #vim.api.nvim_list_tabpages() > 1 then
-                pcall(vim.api.nvim_win_close, normal[1], false) -- otras tabs → cerrar solo esta
+                pcall(vim.api.nvim_win_close, normal[1], false) -- other tabs → close only this one
               else
-                vim.cmd("confirm quit") -- última tab → cerrar nvim
+                vim.cmd("confirm quit") -- last tab → close nvim
               end
             end
           end)
@@ -476,17 +476,17 @@ return {
       })
     end,
     opts = {
-      close_if_last_window = false, -- usamos el auto-cierre custom de arriba
+      close_if_last_window = false, -- we use the custom auto-close above
       enable_git_status = true,
       enable_diagnostics = true,
-      -- Tras cada render, pintar el fondo morado del archivo actual (line_hl).
+      -- After each render, paint the purple background of the current file (line_hl).
       event_handlers = {
         { event = "before_render", handler = collect_open_files },
         { event = "after_render", handler = mark_current_file },
         { event = "before_git_status", handler = skip_ignored_in_changes },
       },
-      -- Renderer de archivo = el default + el marcador de "abierto" a la derecha.
-      -- (El componente `opened_marker` se registra en el `config` de abajo.)
+      -- File renderer = the default + the "open" marker on the right.
+      -- (The `opened_marker` component is registered in the `config` below.)
       renderers = {
         file = {
           { "indent" },
@@ -509,41 +509,41 @@ return {
         position = "right",
         width = 34,
         mappings = {
-          ["Z"] = "expand_all_nodes", -- expandir todas (z ya cierra todas)
-          -- `H` conserva su ergonomía pero pasa por el estado GLOBAL, para que
-          -- Telescope se entere. El `toggle_hidden` nativo solo cambia
-          -- `state.filtered_items.visible` de ESE árbol y nadie más lo ve.
+          ["Z"] = "expand_all_nodes", -- expand all (z already collapses all)
+          -- `H` keeps its ergonomics but goes through the GLOBAL state, so that
+          -- Telescope finds out. The native `toggle_hidden` only changes
+          -- `state.filtered_items.visible` of THAT tree and nobody else sees it.
           ["H"] = function() require("config.hidden").toggle() end,
-          -- Abrir el archivo bajo el cursor con el visor del SISTEMA (imágenes,
-          -- PDF, lo que sea). Delega en config.open → vim.ui.open, así respeta
-          -- la app predeterminada de cada mime y funciona en cualquier SO.
-          -- (`P` queda libre: es el toggle_preview nativo de neo-tree.)
+          -- Open the file under the cursor with the SYSTEM viewer (images,
+          -- PDF, whatever). Delegates to config.open → vim.ui.open, so it honors
+          -- the default app for each mime type and works on any OS.
+          -- (`P` stays free: it is neo-tree's native toggle_preview.)
           ["O"] = function(state)
             local node = state.tree:get_node()
             if not node or node.type == "directory" then return end
             local ok, open = pcall(require, "config.open")
             if ok then open.open(node:get_id()) end
           end,
-          -- Click único abre archivos y expande carpetas (nada de doble click).
-          -- PERO si el click cae en el área VACÍA del sidebar (bajo el último
-          -- nodo), solo enfoca: el LeftMouse ya movió el foco acá, no abrimos nada.
-          -- `getmousepos().line` NO sirve (se pega al último nodo por el clamp), así
-          -- que usamos geometría: la fila de pantalla clickeada (winrow) vs cuántas
-          -- filas tienen contenido real (últ. línea del buffer - primera visible).
+          -- A single click opens files and expands folders (no double click).
+          -- BUT if the click lands on the EMPTY area of the sidebar (below the last
+          -- node), it only focuses: LeftMouse already moved focus here, we open nothing.
+          -- `getmousepos().line` does NOT work (it sticks to the last node because of the clamp), so
+          -- we use geometry: the clicked screen row (winrow) vs how many
+          -- rows have real content (last buffer line - first visible).
           ["<LeftRelease>"] = function(state)
             local mp = vim.fn.getmousepos()
             local win = mp.winid
             if win and vim.api.nvim_win_is_valid(win) then
               local buf = vim.api.nvim_win_get_buf(win)
               local last = vim.api.nvim_buf_line_count(buf)
-              local top = vim.fn.line("w0", win) -- primera línea visible
+              local top = vim.fn.line("w0", win) -- first visible line
               local content_rows = last - top + 1
-              if mp.winrow > content_rows then return end -- área vacía: solo foco
+              if mp.winrow > content_rows then return end -- empty area: focus only
             end
-            -- OJO: usar el `open` de la FUENTE (filesystem/git_status), no el de
-            -- common: el de la fuente inyecta `toggle_directory` (loader async de
-            -- hijos). Con common.open(state) sin ese arg, una carpeta nunca-abierta
-            -- (sin hijos cargados) no se expande al 1er click → necesitaba 2.
+            -- Note: use the SOURCE's `open` (filesystem/git_status), not the one from
+            -- common: the source's one injects `toggle_directory` (async loader of
+            -- children). With common.open(state) without that arg, a never-opened folder
+            -- (no children loaded) does not expand on the 1st click → it needed 2.
             local ok, cmds = pcall(require, "neo-tree.sources." .. (state.name or "") .. ".commands")
             if not (ok and cmds and cmds.open) then
               cmds = require("neo-tree.sources.common.commands")
@@ -553,10 +553,10 @@ return {
         },
       },
       default_component_configs = {
-        -- NOTA: NO usamos `name.highlight_opened_files` porque reemplaza el color
-        -- del texto (borra los amarillos de git → blanco). El "abierto" se marca
-        -- con el ● (opened_marker) y el archivo actual con fondo morado (line_hl).
-        -- Guías de indentación + expanders para ver la jerarquía clara.
+        -- Note: we do NOT use `name.highlight_opened_files` because it replaces the text
+        -- color (wipes the git yellows → white). "Open" is marked
+        -- with the ● (opened_marker) and the current file with a purple background (line_hl).
+        -- Indent guides + expanders to make the hierarchy clear.
         indent = {
           with_markers = true,
           indent_marker = "│",
@@ -571,37 +571,37 @@ return {
           folder_empty = " ",
           default = " ",
           highlight = "NeoTreeFileIcon",
-          -- Iconos de carpeta por NOMBRE (Material Icon Theme-like) + archivos vía
-          -- devicons. Ver icon_provider / FOLDER_ICONS arriba.
+          -- Folder icons by NAME (Material Icon Theme-like) + files via
+          -- devicons. See icon_provider / FOLDER_ICONS above.
           provider = icon_provider,
         },
-        -- Estado git por archivo con LETRAS claras (los glyphs Nerd Font salían en
-        -- blanco en algunas fuentes → parecía "sin cambios"). N=nuevo, M=modificado,
-        -- D=borrado, R=renombrado, C=conflicto, I=ignorado. Colores en onedarkpro
-        -- (NeoTreeGit*), misma paleta que scrollbar/gitsigns/statusline.
-        -- N = nuevo (added/committed vs base) · U = untracked (sin commitear) ·
-        -- M = modificado · D = borrado · R = renombrado · C = conflicto · I = ignorado.
-        -- untracked ≠ nuevo-vs-base: son casos distintos, letras distintas (ambas verdes).
+        -- Per-file git status with clear LETTERS (Nerd Font glyphs showed up white in
+        -- some fonts → it looked like "no changes"). N=new, M=modified,
+        -- D=deleted, R=renamed, C=conflict, I=ignored. Colors in onedarkpro
+        -- (NeoTreeGit*), same palette as scrollbar/gitsigns/statusline.
+        -- N = new (added/committed vs base) · U = untracked (uncommitted) ·
+        -- M = modified · D = deleted · R = renamed · C = conflict · I = ignored.
+        -- untracked ≠ new-vs-base: they are different cases, different letters (both green).
         git_status = {
           symbols = {
             added = "N", modified = "M", deleted = "D", renamed = "R",
             untracked = "U", ignored = "I", unstaged = "", staged = "", conflict = "C",
           },
         },
-        -- Diagnósticos LSP en el árbol.
+        -- LSP diagnostics in the tree.
         diagnostics = {
           symbols = { hint = "󰌵", info = "", warn = "", error = "" },
         },
       },
       filesystem = {
-        hijack_netrw_behavior = "open_current", -- abrir un directorio → neo-tree
-        -- follow_current_file DESACTIVADO: al reabrir re-colapsaba el árbol para
-        -- revelar el archivo actual (perdías las carpetas que tenías abiertas).
-        -- El archivo actual igual se marca en dorado (highlight_opened_files).
+        hijack_netrw_behavior = "open_current", -- opening a directory → neo-tree
+        -- follow_current_file DISABLED: on reopen it re-collapsed the tree to
+        -- reveal the current file (you lost the folders you had open).
+        -- The current file is still marked in gold (highlight_opened_files).
         follow_current_file = { enabled = false },
-        use_libuv_file_watcher = true, -- refresca solo al crear/mover/borrar
-        -- El default vive en config.hidden para no tener la misma decisión
-        -- escrita en dos lugares (acá y en el toggle global).
+        use_libuv_file_watcher = true, -- refreshes on its own on create/move/delete
+        -- The default lives in config.hidden so the same decision is not
+        -- written in two places (here and in the global toggle).
         filtered_items = require("config.hidden").neotree_filtered_items(),
       },
     },
@@ -612,18 +612,18 @@ return {
       "nvim-lua/plenary.nvim",
       "nvim-neo-tree/neo-tree.nvim",
     },
-    -- Actualiza los imports al mover/renombrar en el árbol. Antes este spec
-    -- alojaba los atajos <leader>e/<leader>E y solo se cargaba al apretarlos, así
-    -- que si el árbol se abría con <leader>s o al restaurar la sesión, no estaba
-    -- activo. Los atajos ahora viven en el spec de neo-tree.
+    -- Updates imports when moving/renaming in the tree. This spec used to
+    -- host the <leader>e/<leader>E keymaps and only loaded when they were pressed, so
+    -- if the tree was opened with <leader>s or on session restore, it was not
+    -- active. The keymaps now live in the neo-tree spec.
     event = "VeryLazy",
     config = function()
       require("lsp-file-operations").setup()
     end,
   },
   {
-    -- Solo lo usa neo-tree al abrir con `w` (elegir ventana): se carga con el
-    -- primer `require("window-picker")`, no en el arranque.
+    -- Only neo-tree uses it when opening with `w` (pick a window): it loads with the
+    -- first `require("window-picker")`, not at startup.
     "s1n7ax/nvim-window-picker",
     lazy = true,
     version = "2.*",

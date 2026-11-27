@@ -1,7 +1,7 @@
 id: FEA-SES
-name: Sesión
-purpose: Cómo se guarda y se restaura el estado de trabajo (archivos abiertos, ventanas, árbol) entre aperturas de Neovim.
-scope: sesion
+name: Session
+purpose: How the working state (open files, windows, tree) is saved and restored between Neovim launches.
+scope: session
 rules:
   - id: BR-659d5e8
     status: active

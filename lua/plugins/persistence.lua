@@ -1,16 +1,16 @@
 return {
   "folke/persistence.nvim",
-  lazy = false, -- cargar al arranque para poder auto-restaurar
-  -- Defaults del plugin (sesiones en stdpath("state")/sessions, una por
-  -- directorio y rama). Qué guarda cada sesión lo define `sessionoptions` en
-  -- lua/config/options.lua: persistence no tiene una opción propia para eso.
+  lazy = false, -- load at startup so it can auto-restore
+  -- Plugin defaults (sessions in stdpath("state")/sessions, one per
+  -- directory and branch). What each session saves is defined by `sessionoptions` in
+  -- lua/config/options.lua: persistence has no option of its own for that.
   opts = {},
   config = function(_, opts)
     require("persistence").setup(opts)
     local group = vim.api.nvim_create_augroup("UserPersistence", { clear = true })
-    -- Auto-restaurar la sesión de ESTE directorio al abrir `nvim` sin archivos
-    -- (te devuelve los últimos archivos abiertos). Si abres un archivo puntual
-    -- (`nvim foo.ts`), no restaura.
+    -- Auto-restore the session of THIS directory when opening `nvim` without files
+    -- (it brings back the last opened files). If you open a specific file
+    -- (`nvim foo.ts`), it does not restore.
     vim.api.nvim_create_autocmd("VimEnter", {
       group = group,
       nested = true,
@@ -21,23 +21,23 @@ return {
       end,
     })
 
-    -- Guardar la sesión MIENTRAS trabajas (no solo al salir): así, aunque cierres
-    -- la terminal de golpe (sin :qa), la sesión queda fresca en el último archivo
-    -- que estabas viendo. Solo para buffers reales de archivo.
+    -- Save the session WHILE you work (not only on exit): that way, even if you
+    -- close the terminal abruptly (without :qa), the session stays fresh on the last file
+    -- you were viewing. Only for real file buffers.
     --
-    -- DIFERIDO: `save()` es un :mksession más un `git branch` sincrónico (25-38
-    -- ms) y antes corría en cada BufLeave: al pasar al árbol, al abrir Telescope
-    -- o al cambiar de buffer. Ahora cada evento reinicia un temporizador y se
-    -- guarda una sola vez tras 1 s de calma; al perder el foco, en el acto. Al
-    -- salir con :q guarda el VimLeavePre propio de persistence.
+    -- DEFERRED: `save()` is a :mksession plus a synchronous `git branch` (25-38
+    -- ms) and used to run on every BufLeave: when moving to the tree, opening Telescope
+    -- or switching buffers. Now each event restarts a timer and it saves
+    -- only once after 1 s of calm; on focus loss, immediately. On
+    -- exit with :q, persistence's own VimLeavePre saves.
     local save_timer = assert(vim.uv.new_timer())
-    -- Respeta <leader>qd (`stop()`): antes este autocmd seguía guardando igual.
+    -- Respects <leader>qd (`stop()`): this autocmd used to keep saving anyway.
     local function save()
       local p = require("persistence")
       if p.active() then pcall(p.save) end
     end
-    -- Mismo filtro que aplica persistence al salir: un mensaje de commit abierto
-    -- con `EDITOR=nvim` no es una sesión de trabajo y no debe pisar la guardada.
+    -- Same filter persistence applies on exit: a commit message opened
+    -- with `EDITOR=nvim` is not a work session and must not overwrite the saved one.
     local skip_ft = { gitcommit = true, gitrebase = true, jj = true }
     vim.api.nvim_create_autocmd({ "BufWritePost", "BufEnter" }, {
       group = group,

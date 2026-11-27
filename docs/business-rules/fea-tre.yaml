@@ -1,7 +1,7 @@
 id: FEA-TRE
-name: Árbol de archivos y de cambios
-purpose: Qué muestra el panel lateral (archivos del proyecto o cambios pendientes) y cómo se abre, se cierra y se revela.
-scope: arbol
+name: File and changes tree
+purpose: What the side panel shows (project files or pending changes) and how it opens, closes and reveals.
+scope: tree
 rules:
   - id: BR-1755c5c
     status: active
