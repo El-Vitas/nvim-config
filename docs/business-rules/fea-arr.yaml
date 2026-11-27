@@ -3,8 +3,45 @@ name: Arranque y carga
 purpose: Qué se carga al abrir Neovim y qué se posterga hasta que se usa.
 scope: cross-cutting
 rules:
-  - id: BR-21dae81
+  - id: BR-b940e7d
     status: active
+    title: Opening a JavaScript project does not freeze the editor
+    rule: >-
+      When a project's language server asks to watch its files, the editor does not block while that watching is being
+      set up, even if the project has tens of thousands of folders.
+    why: >-
+      Without this, opening a FastCase file left the editor stuck for 4.6 s walking 38,000 folders, and every shortcut
+      during those seconds felt slow.
+    context: Depends on the system having inotifywait (the inotify-tools package). See D-05.
+    supersedes: BR-21dae81
+    scenarios:
+      - title: Large project
+        given: A project with 38,000 folders, including node_modules
+        when: The user opens a .ts file and presses <leader>e right away
+        then: The tree opens in under 100 ms
+  - id: BR-c2c79fe
+    status: active
+    title: What is not used is not loaded at startup
+    rule: >-
+      When Neovim opens, the finder, autocompletion, harpoon and the language servers are not loaded; each one is loaded
+      the first time it is used (its shortcut, insert mode or the first file opened). The tree is loaded at startup,
+      because opening a directory (nvim .) shows it.
+    why: Every extra tool loaded lengthens startup even if the session never uses it.
+    context: >-
+      Startup is dominated by opening the first file (syntax highlighting and review-mode), about 265 ms in FastCase.
+      See D-06.
+    supersedes: BR-8f31f0c
+    scenarios:
+      - title: Open without files
+        given: Neovim just opened with no arguments
+        when: The loaded plugins are checked
+        then: The finder, autocompletion and harpoon are not loaded
+      - title: First use
+        given: The finder is not loaded
+        when: The user presses <leader>ff
+        then: The finder loads and opens
+  - id: BR-21dae81
+    status: superseded
     title: Abrir un proyecto JavaScript no congela el editor
     rule: >-
       Cuando el servidor de lenguaje de un proyecto pide vigilar sus archivos, el editor no se bloquea mientras arma esa
@@ -13,13 +50,14 @@ rules:
       Sin esto, abrir un archivo de FastCase dejaba el editor trabado 4,6 s recorriendo 38 000 carpetas, y cualquier
       atajo en esos segundos se sentía lento.
     context: Depende de que el sistema tenga inotifywait (paquete inotify-tools). Ver D-05.
+    superseded_by: BR-b940e7d
     scenarios:
       - title: Proyecto grande
         given: Un proyecto con 38 000 carpetas, incluido node_modules
         when: El usuario abre un archivo .ts y aprieta <leader>e enseguida
         then: El árbol abre en menos de 100 ms
   - id: BR-8f31f0c
-    status: active
+    status: superseded
     title: Lo que no se usa no se carga al arrancar
     rule: >-
       Al abrir Neovim no se cargan el buscador, el autocompletado, harpoon ni los servidores de lenguaje; cada uno se
@@ -29,6 +67,7 @@ rules:
     context: >-
       El arranque queda dominado por abrir el primer archivo (resaltado de sintaxis y review-mode), unos 265 ms en
       FastCase. Ver D-06.
+    superseded_by: BR-c2c79fe
     scenarios:
       - title: Abrir sin archivos
         given: Neovim recién abierto sin argumentos

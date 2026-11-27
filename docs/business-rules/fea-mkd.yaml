@@ -3,8 +3,51 @@ name: Markdown
 purpose: Cómo se ven y se editan los archivos markdown.
 scope: markdown
 rules:
-  - id: BR-a206ba0
+  - id: BR-b4c7424
     status: active
+    title: Markdown is viewed rendered and edited raw
+    rule: >-
+      In normal and visual mode a markdown file is viewed rendered (headings, code, lists, tables as a grid); in insert
+      mode the raw text is shown, and the cursor line is always shown raw. <leader>m toggles between rendered and raw.
+    why: Reading rendered and editing while seeing the real characters avoids guessing where a link or a table ends.
+    context: The two-column preview (<leader>M) has its own rule.
+    supersedes: BR-b9d413a
+    scenarios:
+      - title: Long table
+        given: A table whose cells do not fit the window width
+        when: The user views it in normal mode
+        then: The cells wrap inside their column and the borders stay aligned on every line
+  - id: BR-e1133ba
+    status: active
+    title: The preview shows raw and rendered side by side, and they move together
+    rule: >-
+      <leader>M opens, to the right of the markdown file, a column with the rendered document, and the file stays raw on
+      the left. Both columns always show the same top line and the same cursor line, whichever one is scrolled or has
+      its cursor moved. What is edited in the file appears in the preview, with tables as a grid and code with colors.
+      If the file's window changes to show another markdown file, the preview changes to show that one; if it changes to
+      show another type of file, the preview closes. <leader>M closes it from either of the two columns, closing either
+      of the two closes it, and when it closes the file goes back to how it looked before (rendered or raw). Files
+      cannot be opened in the preview column. There is only one preview at a time.
+    why: >-
+      Reported on 2026-10-28: the columns did not move together, switching files left a preview of the previous file,
+      and together with the review split there were three columns.
+    context: Details in docs/decisions.md (D-22). Verified by tests/mdpreview.lua (tests/run.sh).
+    supersedes: BR-a206ba0
+    scenarios:
+      - title: Scroll in the preview
+        given: The preview is open and the focus is on it
+        when: The user scrolls down with <C-e> or jumps to a line
+        then: The raw file shows the same top line and the cursor on the same line
+      - title: Close the preview from itself
+        given: The preview is open and the focus is on it
+        when: The user presses <leader>M
+        then: The preview closes and the file goes back to being rendered
+      - title: Open another file
+        given: The preview of doc.md is open
+        when: The user opens code.lua in doc.md's window
+        then: The preview closes and a single column remains
+  - id: BR-a206ba0
+    status: superseded
     title: La vista previa muestra crudo y renderizado lado a lado, y se mueven juntos
     rule: >-
       <leader>M abre a la derecha del archivo markdown una columna con el documento renderizado, y el archivo queda
@@ -19,6 +62,7 @@ rules:
       Reportado el 2026-10-28: las columnas no se movían juntas, cambiar de archivo dejaba una vista previa del archivo
       anterior, y junto con el split de review quedaban tres columnas.
     context: Detalle en docs/decisions.md (D-22). Verificado por tests/mdpreview.lua (tests/run.sh).
+    superseded_by: BR-e1133ba
     scenarios:
       - title: Desplazarse en la vista previa
         given: La vista previa está abierta y el foco está en ella
@@ -33,7 +77,7 @@ rules:
         when: El usuario abre code.lua en la ventana de doc.md
         then: La vista previa se cierra y queda una sola columna
   - id: BR-b9d413a
-    status: active
+    status: superseded
     title: Markdown se ve renderizado y se edita crudo
     rule: >-
       En modo normal y visual un archivo markdown se ve renderizado (títulos, código, listas, tablas como grilla); en
@@ -42,6 +86,7 @@ rules:
     why: Leer renderizado y editar viendo los caracteres reales evita adivinar dónde termina un enlace o una tabla.
     context: La vista previa en dos columnas (<leader>M) tiene su propia regla.
     supersedes: BR-f507ed6
+    superseded_by: BR-b4c7424
     scenarios:
       - title: Tabla larga
         given: Una tabla cuyas celdas no entran en el ancho de la ventana
