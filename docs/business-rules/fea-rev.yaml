@@ -1,9 +1,9 @@
 id: FEA-REV
-name: Vistas de review
+name: Review views
 purpose: >-
-  Cómo se ve un archivo contra la base de comparación (normal, inline, split) y cómo se comportan las columnas al
-  cambiar de archivo, de ventana o de pestaña.
-scope: review-vistas
+  How a file looks against the comparison base (normal, inline, split) and how the columns behave when switching file,
+  window or tab.
+scope: review-views
 rules:
   - id: BR-577b418
     status: active

@@ -1,7 +1,7 @@
 id: FEA-BIN
-name: Archivos binarios
-purpose: Qué pasa al abrir imágenes, PDF, documentos de ofimática y comprimidos.
-scope: binarios
+name: Binary files
+purpose: What happens when opening images, PDFs, office documents and archives.
+scope: binaries
 rules:
   - id: BR-eeeb1e0
     status: active

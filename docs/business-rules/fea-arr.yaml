@@ -1,6 +1,6 @@
 id: FEA-ARR
-name: Arranque y carga
-purpose: Qué se carga al abrir Neovim y qué se posterga hasta que se usa.
+name: Startup and loading
+purpose: What loads when Neovim opens and what is deferred until it is used.
 scope: cross-cutting
 rules:
   - id: BR-b940e7d

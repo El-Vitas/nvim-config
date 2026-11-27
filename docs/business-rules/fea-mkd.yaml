@@ -1,6 +1,6 @@
 id: FEA-MKD
 name: Markdown
-purpose: Cómo se ven y se editan los archivos markdown.
+purpose: How Markdown files look and are edited.
 scope: markdown
 rules:
   - id: BR-b4c7424
