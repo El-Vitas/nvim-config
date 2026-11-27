@@ -59,7 +59,7 @@ The ● queries a set of visible files that is built once per render (`before_re
 
 ## D-04 · The ignored-files check of `hidden.lua` is asynchronous
 
-`lua/config/hidden.lua`, function `asegurar_filtro`.
+`lua/config/hidden.lua`, function `ensure_filter`.
 
 On the first render, neo-tree has not yet marked the ignored files and shows them. `hidden.lua` verifies the result against git (`git check-ignore --stdin` with the visible paths) and navigates again if any remain, with a cap of 6 attempts. The check waited for git with `:wait()` after every render, including renders of the changes tree, which has no ignored files to filter.
 

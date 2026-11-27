@@ -1,207 +1,207 @@
 ---
 name: vitas-writing
-description: MANDATORY whenever you write or revise prose — a document, a README, an ADR, a PR description, a commit body, a comment reply, an email, a report, or a long chat answer. Covers the tics that make text read as machine-written (colons used as conjunctions, em-dash overuse, inflated vocabulary, uniform rhythm, ceremonial openings, hedged non-positions) and the rules that make writing worth reading (say it once, lead with the conclusion, cut filler, take a position, table vs prose). Trigger on "escribe", "redacta", "documenta esto", "revisa el estilo", "esto suena a IA", "quítale los tics", "humaniza esto", "hazlo más corto", "resume", and whenever you are about to produce more than a few paragraphs of prose. Do not write prose without reading this first.
+description: MANDATORY whenever you write or revise prose (a document, a README, an ADR, a PR description, a commit body, a comment reply, an email, a report, or a long chat answer). Covers the tics that make text read as machine-written (colons used as conjunctions, em-dash overuse, inflated vocabulary, uniform rhythm, ceremonial openings, hedged non-positions) and the rules that make writing worth reading (say it once, lead with the conclusion, cut filler, take a position, table vs prose). Trigger on "write", "draft", "document this", "review the style", "this sounds like AI", "remove the tics", "humanize this", "make it shorter", "summarize", and in Spanish on "escribe", "redacta", "documenta esto", "revisa el estilo", "esto suena a IA", "quítale los tics", "humaniza esto", "hazlo más corto", "resume", and whenever you are about to produce more than a few paragraphs of prose. Do not write prose without reading this first.
 ---
 
 # Vitas Writing
 
-**Escribe para que se entienda, no para que suene bien.** Si hay que elegir entre elegancia y claridad, gana claridad siempre.
+**Write to be understood, not to sound good.** When elegance and clarity conflict, clarity always wins.
 
-Esta skill cubre dos cosas distintas que se refuerzan.
+This skill covers two different things that reinforce each other.
 
-La primera son los tics de escritura automática. Un modelo elige, en cada palabra, la continuación más probable, y eso produce prosa fluida y sin fricción que dice menos de lo que ocupa. Queda más densa de leer y más pobre en postura que el equivalente escrito por una persona.
+The first is the tics of automatic writing. A model picks the most probable continuation at every word, and that produces fluent, frictionless prose that says less than it takes up. It is denser to read and poorer in stance than the equivalent written by a person.
 
-La segunda es redactar bien, que es un problema anterior y más grande. Un texto sin tics pero con relleno, con la conclusión enterrada y con la misma idea dicha tres veces sigue siendo un mal texto.
+The second is writing well, which is an earlier and bigger problem. A text with no tics but full of filler, with the conclusion buried and the same idea said three times, is still a bad text.
 
-Dos reglas que mandan sobre el resto:
+Two rules that override the rest:
 
-1. **Un tic no se compensa, se borra.** Cambiar todas las rayas largas por dos puntos no arregla nada. Sustituye una muletilla por otra.
-2. **La regla se verifica sobre el texto.** Si no se puede señalar la frase que la incumple, no pertenece acá.
+1. **A tic is not compensated for, it is deleted.** Swapping every em dash for a colon fixes nothing. It replaces one crutch with another.
+2. **The rule is checked against the text.** If you cannot point to the sentence that breaks it, it does not belong here.
 
-## Alcance
+## Scope
 
-**Aplica a:** documentos, README, ADR, descripciones de PR, cuerpos de commit, respuestas a comentarios, correos, informes, y respuestas de chat de más de unos párrafos.
+**Applies to:** documents, READMEs, ADRs, PR descriptions, commit bodies, comment replies, emails, reports, and chat answers longer than a few paragraphs.
 
-**No aplica a:** código, comentarios de código, citas literales, texto de terceros que se reproduce, salida de herramientas, ni metadata de disparo. El `description` de una skill se escribe denso en palabras clave a propósito, porque su trabajo es que la skill se active, no que alguien la lea.
+**Does not apply to:** code, code comments, verbatim quotes, reproduced third-party text, tool output, or trigger metadata. A skill's `description` is written dense in keywords on purpose, because its job is to get the skill activated, not to be read by anyone.
 
-**No puede:** cambiar lo que el texto afirma, inventar datos, ni meter erratas o anécdotas falsas para "sonar humano". Un error plantado es una mentira sobre el origen del texto, y además se nota.
+**It cannot:** change what the text claims, invent data, or plant typos or false anecdotes to "sound human". A planted error is a lie about where the text came from, and it shows anyway.
 
 ---
 
-## 1. Puntuación de adorno
+## 1. Decorative punctuation
 
-Es el tic más visible, porque se ve antes de leer. Un lector reconoce la silueta de un párrafo lleno de dos puntos y rayas largas sin haber procesado una sola palabra.
+This is the most visible tic, because it shows before anything is read. A reader recognizes the silhouette of a paragraph full of colons and em dashes without having processed a single word.
 
-| ID | Regla | Mal | Bien |
+| ID | Rule | Bad | Good |
 |---|---|---|---|
-| **WRI-PUN-001** | **Los dos puntos anuncian algo que viene después, no explican lo que vino antes.** Usarlos para encajar una causa, una consecuencia o un matiz es reemplazar una conjunción por un signo | "No conviene hacerlo: no va a ser efectivo" | "No conviene hacerlo porque no va a ser efectivo" |
-| **WRI-PUN-002** | Si al reemplazar los dos puntos por *porque*, *así que*, una coma o un punto la frase sigue funcionando, sobraban | "El resultado fue claro: nadie lo usó" | "El resultado fue claro. Nadie lo usó" |
-| **WRI-PUN-003** | Nunca dos frases seguidas con la misma estructura de dos puntos. Es el patrón que más delata | "El equipo creció: pasó a doce. El costo subió: casi el doble" | "El equipo creció a doce personas y el costo casi se duplicó" |
-| **WRI-PUN-004** | Raya larga como signo comodín: máximo una por párrafo. Casi siempre es punto, coma o paréntesis. Se salva cuando la frase ya usa comas para una enumeración y la raya es lo que evita la ambigüedad | "El plan —que nadie revisó— falló" | "El plan falló. Nadie lo había revisado" |
-| **WRI-PUN-005** | No se sustituye un signo de adorno por otro. Al quitar una raya larga, la reescritura no puede terminar en dos puntos, y al revés | "El motivo era otro: el presupuesto" | "El motivo era el presupuesto" |
-| **WRI-PUN-006** | El paréntesis tampoco es refugio. Si el inciso importa, va en su propia frase; si no importa, se borra | "La migración (que tomó tres meses) terminó" | "La migración terminó. Tomó tres meses" |
+| **WRI-PUN-001** | **A colon announces what comes next, it does not explain what came before.** Using it to wedge in a cause, a consequence or a nuance is replacing a conjunction with a sign | "It is not advisable: it will not be effective" | "It is not advisable because it will not be effective" |
+| **WRI-PUN-002** | If replacing the colon with *because*, *so*, a comma or a period leaves the sentence working, the colon was extra | "The result was clear: nobody used it" | "The result was clear. Nobody used it" |
+| **WRI-PUN-003** | Never two consecutive sentences with the same colon structure. It is the pattern that gives you away the most | "The team grew: it went to twelve. The cost rose: almost double" | "The team grew to twelve people and the cost almost doubled" |
+| **WRI-PUN-004** | Em dash as a wildcard sign: at most one per paragraph. It is almost always a period, a comma or a parenthesis. It is justified when the sentence already uses commas for a list and the dash is what avoids ambiguity | "The plan — which nobody reviewed — failed" | "The plan failed. Nobody had reviewed it" |
+| **WRI-PUN-005** | One decorative sign is not swapped for another. When removing an em dash, the rewrite cannot end up with a colon, and the other way around | "The reason was different: the budget" | "The reason was the budget" |
+| **WRI-PUN-006** | The parenthesis is no refuge either. If the aside matters, it goes in its own sentence; if it does not matter, it is deleted | "The migration (which took three months) finished" | "The migration finished. It took three months" |
 
-### Los tres usos válidos de los dos puntos
+### The three valid uses of the colon
 
-1. **Anunciar una enumeración.** *"Faltan tres cosas: el presupuesto, el plazo y el dueño."*
-2. **Introducir una cita literal.** *"El informe lo dice así: «no hay línea base»."*
-3. **Separar una etiqueta de su valor.** *"Estado: vigente."* Es el uso de tablas y fichas, no el de la prosa.
+1. **Announcing a list.** *"Three things are missing: the budget, the deadline and the owner."*
+2. **Introducing a verbatim quote.** *"The report says it like this: "there is no baseline"."*
+3. **Separating a label from its value.** *"Status: active."* This is the use of tables and record cards, not of prose.
 
-Fuera de esos tres, la pregunta es qué conjunción se esconde detrás del signo. Casi siempre es *porque*.
+Outside those three, the question is which conjunction is hiding behind the sign. It is almost always *because*.
 
 ---
 
-## 2. Léxico
+## 2. Vocabulary
 
-| ID | Regla | Cómo se verifica |
+| ID | Rule | How to verify |
 |---|---|---|
-| **WRI-LEX-001** | Cero palabras grandilocuentes que no cambian el significado: *profundizar, intrincado, meticuloso, robusto, integral, impecable, exhaustivo, riguroso, invaluable, crucial, fundamental, clave, potenciar, aprovechar, desbloquear, navegar (un problema), panorama, ecosistema, sinergia, holístico, granular* | Tachar la palabra y releer. Si la frase dice lo mismo, sobraba |
-| **WRI-LEX-002** | La palabra común gana. *Utilizar* es *usar*; *realizar* es *hacer*; *implementar* es *hacer* o *poner*; *aproximadamente* es *como*; *previo a* es *antes de* | Sustituir por la corta y ver si se pierde precisión |
-| **WRI-LEX-003** | Cero intensificadores de relleno: *sumamente, extremadamente, altamente, verdaderamente, realmente, absolutamente, sin duda* | Borrarlos y comprobar que la frase no cambió |
-| **WRI-LEX-004** | El adjetivo de calidad se reemplaza por el dato que lo sostiene, o se borra | "Un proceso eficiente" → "Un proceso con 15% de tiempo de gestión" |
-| **WRI-LEX-005** | Estilo nominal a voz activa. El verbo al centro | "Se realizó la optimización del proceso" → "Optimizamos el proceso" |
-| **WRI-LEX-006** | **El impersonal no puede esconder a quien decide o ejecuta.** Un *se + verbo* con verbo real no es estilo nominal, y se cuela igual. En una decisión o un compromiso, el sujeto va explícito | "Se implementará la mejora el próximo trimestre" → "El equipo de plataforma implementa la mejora el próximo trimestre" |
-| **WRI-LEX-007** | Una palabra por concepto en todo el texto. Alternar sinónimos para "no repetir" es un reflejo escolar que obliga al lector a comprobar si son lo mismo | Listar los términos propios y contar sus variantes |
+| **WRI-LEX-001** | Zero grandiose words that do not change the meaning: *delve, intricate, meticulous, robust, comprehensive, seamless, impeccable, exhaustive, rigorous, invaluable, crucial, pivotal, key, leverage, unlock, navigate (a problem), landscape, ecosystem, synergy, holistic, granular* | Strike the word and reread. If the sentence says the same, it was extra |
+| **WRI-LEX-002** | The common word wins. *Utilize* is *use*; *perform* is *do*; *implement* is *do* or *put in place*; *approximately* is *about*; *prior to* is *before* | Substitute the short one and check whether precision is lost |
+| **WRI-LEX-003** | Zero filler intensifiers: *extremely, highly, truly, really, absolutely, undoubtedly, incredibly* | Delete them and check that the sentence did not change |
+| **WRI-LEX-004** | The quality adjective is replaced by the data that supports it, or deleted | "An efficient process" → "A process with 15% handling time" |
+| **WRI-LEX-005** | Nominal style to active voice. The verb goes at the center | "The optimization of the process was carried out" → "We optimized the process" |
+| **WRI-LEX-006** | **The passive cannot hide who decides or executes.** A passive with a real verb is not nominal style, and it slips in just the same. In a decision or a commitment, the subject is explicit | "The improvement will be implemented next quarter" → "The platform team implements the improvement next quarter" |
+| **WRI-LEX-007** | One word per concept throughout the text. Alternating synonyms to "avoid repetition" is a school reflex that forces the reader to check whether they are the same | List the text's own terms and count their variants |
 
-> El uso de *delve* (*profundizar*), *intricate* y *meticulous* en artículos de PubMed se disparó en el mes exacto del lanzamiento de ChatGPT. No son palabras malas. Son palabras que un modelo elige mucho más que una persona, y su presencia repetida sin que el tema las pida es lo que se nota.
+> The use of *delve*, *intricate* and *meticulous* in PubMed articles spiked in the exact month ChatGPT launched. They are not bad words. They are words a model picks far more often than a person does, and what shows is their repeated presence when the topic does not call for them.
 
 ---
 
-## 3. Ritmo
+## 3. Rhythm
 
-Un texto automático tiene frases de largo parecido y párrafos de tamaño parecido. Esa uniformidad es la señal más difícil de imitar a mano y la más fácil de romper.
+An automatic text has sentences of similar length and paragraphs of similar size. That uniformity is the signal hardest to imitate by hand and the easiest to break.
 
-Cada regla va con las dos formas de aplicarla. La columna del medio se usa con las manos en el teclado. La de la derecha, releyendo el párrafo terminado. Las reglas de ritmo se saltan cuando solo se enuncian como diagnóstico, porque contar palabras exige un párrafo que todavía no existe.
+Each rule comes with both ways of applying it. The middle column is used with hands on the keyboard. The right one, rereading the finished paragraph. The rhythm rules get skipped when they are only stated as a diagnosis, because counting words requires a paragraph that does not exist yet.
 
-| ID | Regla | Al escribir | Al revisar |
+| ID | Rule | While writing | While reviewing |
 |---|---|---|---|
-| **WRI-RIT-001** | Los largos de frase varían dentro de cada párrafo | Después de una frase larga con subordinadas, la siguiente sale corta. A propósito, no cuando salga | Contar palabras por frase. Si todas caen en un rango de cinco, hay que romperlo |
-| **WRI-RIT-002** | Los párrafos no miden todos lo mismo. Uno de una línea es legítimo | Al cerrar un párrafo, mirar el anterior. Si van dos del mismo porte, el próximo cambia | Mirar el bloque de lejos. Si forman ladrillos iguales, está mal |
-| **WRI-RIT-003** | Máximo 30 palabras por frase | Si la frase pasó la segunda coma y no cerró, cerrarla ahí. Lo que falta es otra frase | Contar las que pasen de 30 y partirlas |
-| **WRI-RIT-004** | Nada de enumerar de a tres por inercia. Si los elementos reales son dos, van dos | Al escribir el tercer elemento, preguntarse si existe o si lo pide la cadencia | Buscar tríadas con el mismo peso: "rápido, eficiente y seguro" |
-| **WRI-RIT-005** | Las listas no tienen todas la misma cantidad de ítems ni ítems del mismo largo, salvo que el contenido lo pida | | Comparar las listas entre sí |
+| **WRI-RIT-001** | Sentence lengths vary within each paragraph | After a long sentence with subordinate clauses, the next one comes out short. On purpose, not whenever it happens | Count words per sentence. If they all fall within a range of five, break it |
+| **WRI-RIT-002** | Paragraphs are not all the same size. A one-line paragraph is legitimate | When closing a paragraph, look at the previous one. If two of the same size are in a row, the next one changes | Look at the block from afar. If they form identical bricks, it is wrong |
+| **WRI-RIT-003** | Maximum 30 words per sentence | If the sentence is past the second comma and has not closed, close it there. What is left is another sentence | Count those over 30 and split them |
+| **WRI-RIT-004** | No listing in threes out of inertia. If the real items are two, two go in | When writing the third item, ask whether it exists or whether the cadence demands it | Look for triads of equal weight: "fast, efficient and secure" |
+| **WRI-RIT-005** | Lists do not all have the same number of items or items of the same length, unless the content calls for it | | Compare the lists with each other |
 
 ---
 
-## 4. Estructura del párrafo
+## 4. Paragraph structure
 
-| ID | Regla | Mal | Bien |
+| ID | Rule | Bad | Good |
 |---|---|---|---|
-| **WRI-EST-001** | Se empieza por el hecho. Nada de apertura ceremoniosa | "En el dinámico panorama actual, las organizaciones enfrentan…" | "Tres de los cinco equipos no entregaron a tiempo" |
-| **WRI-EST-002** | Cero conectores de plantilla al inicio de párrafo: *Además, Adicionalmente, Por otra parte, Asimismo, En resumen, En conclusión, Cabe destacar, Es importante notar, Vale la pena mencionar* | "Además, el costo subió" | "El costo subió" |
-| **WRI-EST-003** | Los párrafos se enlazan por contenido. Si uno necesita un conector para pegarse al anterior, el orden está mal | | |
-| **WRI-EST-004** | Nada de frase final que reformula el párrafo recién escrito | | Borrarla. Si el párrafo no se entendió, se reescribe el párrafo |
-| **WRI-EST-005** | La construcción "no es X, es Y" solo se justifica cuando el lector de verdad esperaba X. Si nadie iba a pensar en X, es una fórmula que infla sin corregir nada, y va directo a la afirmación | "La herramienta no es mala, es limitada" | "La herramienta no cubre el caso de reposición automática" |
-| **WRI-EST-006** | Nada de cierre que anuncia lo ya dicho: *En síntesis, Como hemos visto, En definitiva* | | |
+| **WRI-EST-001** | Start with the fact. No ceremonial opening | "In today's dynamic landscape, organizations face…" | "Three of the five teams did not deliver on time" |
+| **WRI-EST-002** | Zero template connectors at the start of a paragraph: *Moreover, Additionally, Furthermore, In addition, On the other hand, In summary, In conclusion, It is worth noting, It is important to note, It bears mentioning* | "Moreover, the cost rose" | "The cost rose" |
+| **WRI-EST-003** | Paragraphs are linked by content. If one needs a connector to stick to the previous one, the order is wrong | | |
+| **WRI-EST-004** | No closing sentence that restates the paragraph just written | | Delete it. If the paragraph was not understood, the paragraph is rewritten |
+| **WRI-EST-005** | The construction "it is not X, it is Y" is only justified when the reader really expected X. If nobody was going to think of X, it is a formula that inflates without correcting anything, and it goes straight to the claim | "The tool is not bad, it is limited" | "The tool does not cover the case of automatic restocking" |
+| **WRI-EST-006** | No closing that announces what was already said: *In short, As we have seen, Ultimately, To sum up* | | |
 
 ---
 
-## 5. Postura
+## 5. Stance
 
-El tic que menos se ve y más cuesta. Un texto automático explica mucho y no se moja. Ofrece el balance en vez del juicio.
+The tic that shows least and costs most. An automatic text explains a lot and does not commit. It offers the balance instead of the judgment.
 
-| ID | Regla | Mal | Bien |
+| ID | Rule | Bad | Good |
 |---|---|---|---|
-| **WRI-POS-001** | Cuando hay evidencia para tomar posición, se toma | "Es importante sopesar las ventajas y desventajas de cada opción" | "La opción B, aunque cuesta 20% más, es la única que no nos deja atados al proveedor" |
-| **WRI-POS-002** | La incertidumbre se declara, no se disuelve en matices. Decir *no lo sabemos y esto falta para saberlo* es una postura; enumerar consideraciones no lo es | | |
-| **WRI-POS-003** | Cero escapatorias: *si es posible, según corresponda, cuando aplique, idealmente, en la medida de lo posible* | "Se documentará si es posible" | "Se documenta en cada orden. Si no se puede, se registra por qué" |
-| **WRI-POS-004** | Cero términos abiertos que no se pueden comprobar: *dar soporte, gestionar, optimizar, entre otros, como mínimo, diversos, varios* | "El sistema gestiona el inventario" | "El sistema registra entradas, salidas y stock actual de cada repuesto" |
-| **WRI-POS-005** | Si el texto lo firma una persona, no se le inventa experiencia. Se cita el dato y su fuente | | |
-| **WRI-POS-006** | Cero referencias incompletas. Un pronombre o un colectivo que el lector no puede resolver sin releer es un hueco, no un estilo | "Todos coinciden en que el proceso es crítico" | "Los seis operarios de bodega coinciden en que el proceso es crítico" |
-| **WRI-POS-007** | Un dato lleva su fuente, aunque sea informal. Un texto entero sin ninguna atribución no se puede discutir, solo creer o no creer | "La rotación subió 20% este año" | "La rotación subió 20% este año, según nómina" |
+| **WRI-POS-001** | When there is evidence to take a position, take it | "It is important to weigh the pros and cons of each option" | "Option B, although it costs 20% more, is the only one that does not tie us to the vendor" |
+| **WRI-POS-002** | Uncertainty is declared, not dissolved into nuance. Saying *we do not know, and this is what is missing to find out* is a stance; listing considerations is not | | |
+| **WRI-POS-003** | Zero escape hatches: *if possible, as appropriate, where applicable, ideally, to the extent possible* | "It will be documented if possible" | "It is documented on every order. If that is not possible, the reason is recorded" |
+| **WRI-POS-004** | Zero open-ended terms that cannot be checked: *provide support, manage, optimize, among others, at a minimum, various, several* | "The system manages inventory" | "The system records inbound, outbound and current stock of each spare part" |
+| **WRI-POS-005** | If a person signs the text, no experience is invented for them. The data and its source are cited | | |
+| **WRI-POS-006** | Zero incomplete references. A pronoun or a collective that the reader cannot resolve without rereading is a gap, not a style | "Everyone agrees the process is critical" | "The six warehouse operators agree the process is critical" |
+| **WRI-POS-007** | A figure carries its source, even an informal one. A whole text with no attribution at all cannot be debated, only believed or not | "Turnover rose 20% this year" | "Turnover rose 20% this year, according to payroll" |
 
 ---
 
-## 6. Densidad: qué se dice y qué se corta
+## 6. Density: what is said and what is cut
 
-Acá está la mitad que no son tics. Un texto limpio de muletillas pero relleno sigue siendo malo.
+This is the half that is not tics. A text clean of crutches but full of filler is still bad.
 
-| ID | Regla | Cómo se verifica |
+| ID | Rule | How to verify |
 |---|---|---|
-| **WRI-DEN-001** | **La conclusión va primero.** Después el desarrollo. Cuando no hay una sola conclusión sino varios hallazgos sin jerarquía, la primera línea dice cuántos son y de qué tratan, no los desarrolla | Si hay que leer tres párrafos para saber de qué se trata, el orden está invertido |
-| **WRI-DEN-002** | El título dice el hallazgo, no el tema. Un título que solo nombra el asunto obliga a leer el texto para saber si interesa | "Informe sobre el proceso de despacho" → "El despacho tiene tres problemas abiertos" |
-| **WRI-DEN-003** | **Una idea por párrafo** | Contar los "además", "también", "por otro lado" dentro del mismo párrafo |
-| **WRI-DEN-004** | **Se dice una vez.** Nada de resumen arriba y detalle abajo en el mismo texto. Si el resumen basta, sobra el detalle; si el detalle hace falta, sobra el resumen | ¿Hay dos secciones que dicen lo mismo con distinto zoom? |
-| **WRI-DEN-005** | Cero referencias hacia adelante: *esto se explica más abajo*, *lo veremos después*. Si hace falta esa frase, el orden está invertido | Buscar "más abajo", "más adelante", "ver sección", "lo veremos" |
-| **WRI-DEN-006** | Un término se define en su primera aparición, ni antes ni después | Leer buscando la primera vez que aparece cada palabra propia |
-| **WRI-DEN-007** | El énfasis se usa poco. Máximo dos negritas por párrafo | Si todo está en negrita, nada resalta |
-| **WRI-DEN-008** | Tablas para datos comparables, prosa para razonamiento. Una tabla cuya última columna son párrafos debería ser prosa | Mirar la última columna de cada tabla |
-| **WRI-DEN-009** | El largo lo fija el propósito, no la sensación de completitud. Un texto que crece se parte o se corta | |
-| **WRI-DEN-010** | Cero preámbulo sobre lo que se va a hacer. Se hace | "Voy a explicar tres cosas. Primero…" → empezar por la primera |
-| **WRI-DEN-011** | Cero disculpas ni relleno de cortesía que no aporta: *espero que esto ayude*, *no dudes en consultar*, *como se puede apreciar* | Borrarlos y comprobar que no falta nada |
+| **WRI-DEN-001** | **The conclusion goes first.** Then the development. When there is not one conclusion but several findings with no hierarchy, the first line says how many there are and what they are about, it does not develop them | If you have to read three paragraphs to know what it is about, the order is inverted |
+| **WRI-DEN-002** | The title states the finding, not the topic. A title that only names the subject forces you to read the text to know whether it is of interest | "Report on the dispatch process" → "Dispatch has three open problems" |
+| **WRI-DEN-003** | **One idea per paragraph** | Count the "also", "in addition", "on the other hand" inside the same paragraph |
+| **WRI-DEN-004** | **It is said once.** No summary above and detail below in the same text. If the summary is enough, the detail is extra; if the detail is needed, the summary is extra | Are there two sections that say the same thing at a different zoom? |
+| **WRI-DEN-005** | Zero forward references: *this is explained below*, *we will see it later*. If that sentence is needed, the order is inverted | Search for "below", "later", "see section", "we will see" |
+| **WRI-DEN-006** | A term is defined at its first appearance, neither before nor after | Read looking for the first time each of the text's own words appears |
+| **WRI-DEN-007** | Emphasis is used sparingly. At most two bold spans per paragraph | If everything is bold, nothing stands out |
+| **WRI-DEN-008** | Tables for comparable data, prose for reasoning. A table whose last column is paragraphs should be prose | Look at the last column of each table |
+| **WRI-DEN-009** | Length is set by purpose, not by the feeling of completeness. A text that grows is split or cut | |
+| **WRI-DEN-010** | Zero preamble about what is going to be done. It is done | "I am going to explain three things. First…" → start with the first |
+| **WRI-DEN-011** | Zero apologies or courtesy filler that adds nothing: *I hope this helps*, *feel free to reach out*, *as can be seen* | Delete them and check that nothing is missing |
 
-### La prueba del lector escéptico
+### The skeptical reader test
 
-A cada afirmación central, tres preguntas. Si alguna no tiene respuesta en el mismo párrafo, la frase está incompleta.
+For each central claim, three questions. If any has no answer in the same paragraph, the sentence is incomplete.
 
-1. **¿Comparado con qué?**
-2. **¿Cuánto, en qué unidad?**
-3. **¿Quién lo mide y con qué dato?**
+1. **Compared to what?**
+2. **How much, in what unit?**
+3. **Who measures it and with what data?**
 
-Una comparación sin las tres se escribe como hipótesis pendiente, no como hecho.
-
----
-
-## 7. Cómo se revisa
-
-Escribir aplicando las reglas y revisar con ellas son dos pasadas distintas, y las dos hacen falta. Al escribir se evitan los tics locales, que son una decisión palabra por palabra: no pongas ese signo, no uses esa palabra. Al revisar se ven las propiedades del conjunto —ritmo, repetición, orden— que no existen hasta que el párrafo está terminado.
-
-Saltarse la segunda pasada deja un texto sin muletillas y con la conclusión enterrada. Medido: un agente que aplicó la norma mientras escribía dejó cero rayas largas y las mismas cinco frases de más de treinta palabras que tenía sin la norma.
-
-En este orden. Los dos primeros pasos se hacen sin leer el contenido.
-
-1. **Mirar la forma.** Contar dos puntos, rayas largas y paréntesis. Ver si los párrafos son ladrillos del mismo tamaño. Se detecta de lejos y no requiere entender el texto.
-2. **Leer en voz alta.** Las aperturas ceremoniosas, los conectores de plantilla y el ritmo uniforme se oyen antes de verse. Si al leer se entra en cadencia de locutor, hay que romperla.
-3. **Tachar palabras.** Recorrer buscando las de WRI-LEX-001 y WRI-LEX-003. Tachar cada una y releer. La que no cambia nada, se borra.
-4. **Buscar la idea repetida.** Cada afirmación central, ¿aparece en otro lugar del texto? Si sí, uno de los dos sobra.
-5. **Buscar la postura.** Por cada afirmación central, preguntar qué decide. Una que no decide nada, o sobra, o le falta el juicio.
+A comparison without all three is written as a pending hypothesis, not as a fact.
 
 ---
 
-## 8. Autochequeo antes de entregar
+## 7. How to review
 
-Cada respuesta va con la línea concreta que la sostiene. Responder "sí" sin señalar dónde no cuenta.
+Writing while applying the rules and reviewing with them are two different passes, and both are needed. While writing, the local tics are avoided, which is a word-by-word decision: do not put that sign, do not use that word. While reviewing, the properties of the whole show up (rhythm, repetition, order) that do not exist until the paragraph is finished.
 
-1. ¿Cuántos dos puntos hay, y cada uno cae en alguno de los tres usos válidos?
-2. ¿Algún párrafo tiene más de una raya larga?
-3. ¿Se sustituyó algún signo de adorno por otro en vez de reescribir la frase?
-4. ¿Qué párrafo empieza con un conector de plantilla?
-5. ¿Cuántas palabras de WRI-LEX-001 quedaron, y qué aporta cada una?
-6. ¿Los largos de frase varían dentro de cada párrafo?
-7. ¿Hay alguna tríada que en realidad eran dos elementos?
-8. ¿La primera línea dice de qué se trata?
-9. ¿Alguna idea aparece dos veces?
-10. ¿Dónde toma postura el texto? Señalar la frase.
-11. **¿Qué párrafo sobra?** Hay que nombrar uno.
+Skipping the second pass leaves a text with no crutches and the conclusion buried. Measured: an agent that applied the standard while writing left zero em dashes and the same five sentences of more than thirty words that it had without the standard.
 
-> La pregunta 11 está formulada así a propósito. "¿Sobra algo?" se responde que no por defecto. "¿Qué sobra?" obliga a buscar.
+In this order. The first two steps are done without reading the content.
+
+1. **Look at the shape.** Count colons, em dashes and parentheses. See whether the paragraphs are bricks of the same size. It is detected from afar and does not require understanding the text.
+2. **Read aloud.** Ceremonial openings, template connectors and uniform rhythm are heard before they are seen. If reading falls into an announcer's cadence, break it.
+3. **Strike words.** Go through looking for those in WRI-LEX-001 and WRI-LEX-003. Strike each one and reread. The one that changes nothing is deleted.
+4. **Look for the repeated idea.** Does each central claim appear elsewhere in the text? If so, one of the two is extra.
+5. **Look for the stance.** For each central claim, ask what it decides. One that decides nothing is either extra or lacks the judgment.
 
 ---
 
-## 9. Idioma
+## 8. Self-check before delivering
 
-Español neutro, sin voseo ni modismos de ninguna región. *Refresca*, no *refrescá*. *Puedes*, no *podés*. El texto debe leerse igual para cualquier hispanohablante.
+Each answer comes with the concrete line that supports it. Answering "yes" without pointing to where does not count.
 
-Los identificadores de código, los nombres de archivo y los mensajes de commit van en inglés. Esta skill trata de la prosa, no de eso.
+1. How many colons are there, and does each one fall in one of the three valid uses?
+2. Does any paragraph have more than one em dash?
+3. Was any decorative sign swapped for another instead of rewriting the sentence?
+4. Which paragraph starts with a template connector?
+5. How many words from WRI-LEX-001 remain, and what does each contribute?
+6. Do sentence lengths vary within each paragraph?
+7. Is there any triad that was really two items?
+8. Does the first line say what it is about?
+9. Does any idea appear twice?
+10. Where does the text take a stance? Point to the sentence.
+11. **Which paragraph is extra?** One has to be named.
+
+> Question 11 is worded that way on purpose. "Is anything extra?" gets answered no by default. "What is extra?" forces a search.
 
 ---
 
-## Fuera de alcance
+## 9. Language
 
-**No cubre evadir detectores de IA.** Esos sistemas funcionan sobre estadística. Miden qué tan predecible es cada palabra y cuánto varía el ritmo, y se equivocan seguido, sobre todo con texto técnico y con autores que no escriben en su lengua materna.
+Write in plain international English: no idioms, regional slang or culture-specific references that a non-native reader would have to decode. Prefer *use* over *utilize*, and short common words over rare ones. The text must read the same to any English reader, wherever they are.
 
-Escribir bien reduce el parecido con la salida de un modelo. Eso es todo lo que esta skill promete. Perseguir un puntaje es perseguir la métrica en vez del resultado.
-
-Tampoco cubre qué decide un documento ni cómo se estructura un conjunto de documentos. Cuando el repositorio tenga su propia guía de documentación, esa manda y esta se aplica después.
+Code identifiers, file names and commit messages are in English as well. This skill is about prose, not about that.
 
 ---
 
-## Por qué existe
+## Out of scope
 
-Dos motivos, y el segundo pesa más.
+**It does not cover evading AI detectors.** Those systems work on statistics. They measure how predictable each word is and how much the rhythm varies, and they are often wrong, especially with technical text and with authors who do not write in their native language.
 
-Los tics hacen el texto peor, no solo reconocible. Los dos puntos usados como conjunción obligan al lector a reconstruir la relación lógica que el signo escondió. El léxico inflado alarga sin agregar. El ritmo uniforme cansa. Son costos reales para quien lee, y el parecido con la salida de un modelo es una consecuencia.
+Writing well reduces the resemblance to a model's output. That is all this skill promises. Chasing a score is chasing the metric instead of the result.
 
-El relleno cuesta más que los tics. Un texto puede no tener un solo dos puntos de más y aun así desperdiciar el tiempo de quien lo lee. Basta con enterrar la conclusión en el cuarto párrafo, decir la misma idea de tres formas y cerrar reformulando lo anterior.
+It also does not cover what a document decides or how a set of documents is structured. When the repository has its own documentation guide, that one governs and this one is applied afterwards.
 
-Por eso existe la familia WRI-DEN, y por eso el autochequeo termina obligando a nombrar un párrafo que sobra.
+---
+
+## Why it exists
+
+Two reasons, and the second weighs more.
+
+Tics make the text worse, not just recognizable. Colons used as conjunctions force the reader to reconstruct the logical relation the sign hid. Inflated vocabulary lengthens without adding. Uniform rhythm tires. These are real costs for whoever reads, and the resemblance to a model's output is a consequence.
+
+Filler costs more than tics. A text can have not a single extra colon and still waste the reader's time. It is enough to bury the conclusion in the fourth paragraph, say the same idea three ways and close by restating what came before.
+
+That is why the WRI-DEN family exists, and why the self-check ends by forcing you to name a paragraph that is extra.

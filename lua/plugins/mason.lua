@@ -1,7 +1,7 @@
--- mason instala los servidores LSP; mason-lspconfig los asegura y los habilita.
--- Los dos se cargan como dependencias de nvim-lspconfig (ver lspconfig.lua), al
--- abrir el primer archivo: así el PATH de mason ya está listo cuando arranca el
--- primer servidor, y en `nvim` sin archivos no se cargan.
+-- mason installs the LSP servers; mason-lspconfig ensures and enables them.
+-- Both are loaded as dependencies of nvim-lspconfig (see lspconfig.lua), when
+-- the first file is opened: that way mason's PATH is already set up when the
+-- first server starts, and with a bare `nvim` (no files) they are not loaded.
 return {
   {
     "williamboman/mason.nvim",
@@ -11,14 +11,14 @@ return {
   },
   {
     "williamboman/mason-lspconfig.nvim",
-    -- `lazy = true` hace falta aunque sea dependencia de lspconfig: un spec sin
-    -- disparador es un spec raíz y lazy lo carga al arrancar (~22 ms).
+    -- `lazy = true` is needed even though it is a dependency of lspconfig: a spec without
+    -- a trigger is a root spec and lazy loads it at startup (~22 ms).
     lazy = true,
     dependencies = { "williamboman/mason.nvim" },
     opts = {
       ensure_installed = { "vtsls", "tailwindcss", "eslint", "lua_ls" },
-      -- (v2 ya no tiene `automatic_installation`; `automatic_enable`, que viene
-      -- encendido, hace `vim.lsp.enable` de todo lo instalado con mason.)
+      -- (v2 no longer has `automatic_installation`; `automatic_enable`, which comes
+      -- on by default, runs `vim.lsp.enable` on everything installed with mason.)
     },
   },
 }

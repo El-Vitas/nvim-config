@@ -1,7 +1,7 @@
 return {
   {
-    -- Con `dev = true`, lazy usa ~/Dev/nvim/review-mode si existe (donde se desarrolla) y si no
-    -- lo baja de GitHub (`dev.fallback` en init.lua). Así la config se instala en cualquier máquina.
+    -- With `dev = true`, lazy uses ~/Dev/nvim/review-mode if it exists (where it is developed) and otherwise
+    -- downloads it from GitHub (`dev.fallback` in init.lua). That way the config installs on any machine.
     "El-Vitas/review-mode.nvim",
     name = "review-mode",
     dev = true,
@@ -11,10 +11,10 @@ return {
       "nvim-neo-tree/neo-tree.nvim",
     },
     config = function()
-      -- La feature `agent` se CARGA siempre (para tener :ReviewAgent / <leader>ra),
-      -- pero arranca APAGADA en runtime (autostart=false → sin RPC ni watchers).
-      -- OJO: NO usar `enabled=false` acá: el registry interpreta eso como "no
-      -- cargar la feature" y entonces ni el toggle quedaría registrado.
+      -- The `agent` feature is always LOADED (to have :ReviewAgent / <leader>ra),
+      -- but it starts OFF at runtime (autostart=false → no RPC or watchers).
+      -- NOTE: do NOT use `enabled=false` here: the registry interprets that as "do not
+      -- load the feature", and then not even the toggle would be registered.
       require("review").setup({ features = { agent = { autostart = false } } })
     end,
   },

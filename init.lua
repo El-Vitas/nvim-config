@@ -13,13 +13,13 @@ if not (vim.uv or vim.loop).fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
--- Deshabilitar netrw: neo-tree maneja los directorios. Sin esto, abrir `nvim .`
--- (o un directorio) muestra el listado feo de netrw.
+-- Disable netrw: neo-tree handles directories. Without this, opening `nvim .`
+-- (or a directory) shows netrw's ugly listing.
 vim.g.loaded_netrw = 1
 vim.g.loaded_netrwPlugin = 1
--- Los plugins nativos zip/tar registran su propio BufReadCmd para .zip/.docx/
--- .tar.gz y compiten con config.open (que manda esos formatos al visor del
--- sistema). Sin esto salta "(zip#Browse) ... is not a zip file" al abrirlos.
+-- The native zip/tar plugins register their own BufReadCmd for .zip/.docx/
+-- .tar.gz and compete with config.open (which sends those formats to the
+-- system viewer). Without this, "(zip#Browse) ... is not a zip file" shows up when opening them.
 vim.g.loaded_zipPlugin = 1
 vim.g.loaded_zip = 1
 vim.g.loaded_tarPlugin = 1
@@ -29,11 +29,11 @@ vim.g.loaded_tar = 1
 vim.g.mapleader = " "
 vim.g.maplocalleader = "\\"
 
--- Keymaps propios (después del leader, si no `<leader>?` quedaría con el leader viejo).
+-- Own keymaps (after the leader, otherwise `<leader>?` would end up with the old leader).
 require("config.keymaps")
-require("config.buffers") -- límite de buffers abiertos (cola de 5)
-require("config.open").setup() -- imágenes / PDF: visor del sistema + preview
-require("config.hidden").setup() -- estado único de "ocultos" (árbol + telescope)
+require("config.buffers") -- limit on open buffers (queue of 5)
+require("config.open").setup() -- images / PDF: system viewer + preview
+require("config.hidden").setup() -- single "hidden files" state (tree + telescope)
 
 -- Setup lazy.nvim
 require("lazy").setup({
@@ -41,15 +41,15 @@ require("lazy").setup({
     { import = "plugins" },
   },
   install = { colorscheme = { "onedark_vivid" } },
-  -- Plugins propios (`dev = true`): la copia local de ~/Dev/nvim si existe, y si no la de GitHub.
+  -- Own plugins (`dev = true`): the local copy in ~/Dev/nvim if it exists, otherwise the GitHub one.
   dev = { path = "~/Dev/nvim", fallback = true },
-  checker = { enabled = false }, -- sin notificación de "Plugin Updates" al arrancar
-  -- Ningún plugin usa luarocks: apagarlo evita el error de `:checkhealth lazy`
-  -- y que lazy intente instalar hererocks.
+  checker = { enabled = false }, -- no "Plugin Updates" notification at startup
+  -- No plugin uses luarocks: turning it off avoids the `:checkhealth lazy` error
+  -- and lazy trying to install hererocks.
   rocks = { enabled = false },
   performance = {
     rtp = {
-      -- Plugins nativos que no se usan: no se cargan en el arranque.
+      -- Unused native plugins: not loaded at startup.
       disabled_plugins = { "gzip", "tohtml", "tutor" },
     },
   },

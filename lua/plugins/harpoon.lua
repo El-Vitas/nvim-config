@@ -1,5 +1,5 @@
--- Los atajos van en `keys`: así harpoon se carga con el primero que uses y no en
--- el arranque (antes se definían dentro de `config`, lo que obligaba a cargarlo).
+-- The keymaps go in `keys`: that way harpoon loads with the first one you use and not at
+-- startup (they used to be defined inside `config`, which forced loading it).
 local function list() return require("harpoon"):list() end
 local function menu()
   local harpoon = require("harpoon")
@@ -15,14 +15,14 @@ return {
       require("harpoon"):setup()
     end,
     keys = {
-      -- 1. Agregar archivo a la lista
+      -- 1. Add the file to the list
       { "<leader>a", function() list():add() end, desc = "Harpoon Add" },
-      -- 2. Ver el menú (la lista de archivos arponeados)
+      -- 2. View the menu (the list of harpooned files)
       { "<C-h>", menu, desc = "Harpoon Menu" },
-      -- Alias discoverable (aparece en which-key)
+      -- Discoverable alias (shows up in which-key)
       { "<leader>hh", menu, desc = "Harpoon menu (list)" },
-      -- 3. Saltar directo a los archivos (Navegación ultra rápida)
-      -- Usa <leader> + número para saltar entre tus 4 archivos principales
+      -- 3. Jump straight to the files (ultra-fast navigation)
+      -- Use <leader> + number to jump between your 4 main files
       { "<leader>1", function() list():select(1) end, desc = "Harpoon: mark 1" },
       { "<leader>2", function() list():select(2) end, desc = "Harpoon: mark 2" },
       { "<leader>3", function() list():select(3) end, desc = "Harpoon: mark 3" },

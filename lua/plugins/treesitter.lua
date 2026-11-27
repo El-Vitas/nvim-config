@@ -1,17 +1,17 @@
 return {
-  -- 1. Configuración principal de Treesitter
+  -- 1. Main Treesitter configuration
   {
     "nvim-treesitter/nvim-treesitter",
     lazy = false,
     build = ":TSUpdate",
     config = function()
-      -- Parsers que deben estar instalados (desarrollo web y React).
+      -- Parsers that must be installed (web development and React).
       --
-      -- Esta es la rama `main` de nvim-treesitter: ya no existe el módulo
-      -- `nvim-treesitter.configs` ni `ensure_installed`. El bloque viejo que lo
-      -- usaba fallaba en silencio (pcall) y por eso nunca se instalaron html ni
-      -- css. Ahora se instala solo lo que falta (async, sin bloquear); con todo
-      -- instalado no se lanza nada. El resaltado lo arranca el autocmd de abajo.
+      -- This is nvim-treesitter's `main` branch: the `nvim-treesitter.configs`
+      -- module and `ensure_installed` no longer exist. The old block that used
+      -- them failed silently (pcall), and that is why html and css were never
+      -- installed. Now only what is missing gets installed (async, non-blocking); with everything
+      -- installed nothing is launched. Highlighting is started by the autocmd below.
       local ensure = {
         "lua", "vim", "vimdoc", "python", "javascript",
         "typescript", "tsx", "bash", "markdown", "markdown_inline", "html", "css",
@@ -23,15 +23,15 @@ return {
       end, ensure)
       if #missing > 0 then ts.install(missing) end
 
-      -- Autocomando para arrancar Treesitter de forma nativa en Neovim 0.12
+      -- Autocmd to start Treesitter natively in Neovim 0.12
       vim.api.nvim_create_autocmd("FileType", {
         group = vim.api.nvim_create_augroup("UserTreesitterStart", { clear = true }),
         callback = function(args)
-          -- Solo buffers de archivo: los de UI de plugins (prompt de Telescope,
-          -- neo-tree, quickfix) tienen buftype propio.
+          -- File buffers only: plugin UI buffers (Telescope prompt,
+          -- neo-tree, quickfix) have their own buftype.
           if vim.bo[args.buf].buftype ~= "" then return end
-          -- Arranca solo si hay parser para el lenguaje. Sin pcall alrededor de
-          -- start: un parser o una query rota tiene que verse, no esconderse.
+          -- Starts only if there is a parser for the language. No pcall around
+          -- start: a broken parser or query has to be seen, not hidden.
           local lang = vim.treesitter.language.get_lang(vim.bo[args.buf].filetype)
           if lang and vim.treesitter.language.add(lang) then
             vim.treesitter.start(args.buf, lang)
@@ -39,11 +39,11 @@ return {
         end,
       })
 
-      -- Precalentar las consultas. Neovim compila la consulta de cada lenguaje
-      -- la primera vez que la usa en la sesión (en C, bloqueando): abrir el
-      -- primer .tsx traba unos 180 ms. Se compilan antes, de a una por paso y
-      -- solo mientras no se toca el teclado; cada tecla pospone el resto un
-      -- segundo. Ver docs/decisions.md (D-21).
+      -- Pre-warm the queries. Neovim compiles each language's query
+      -- the first time it is used in the session (in C, blocking): opening the
+      -- first .tsx stalls for about 180 ms. They are compiled beforehand, one per step and
+      -- only while the keyboard is untouched; each keypress postpones the rest by one
+      -- second. See docs/decisions.md (D-21).
       local pending = {}
       for _, lang in ipairs({ "typescript", "tsx", "javascript", "css", "html", "bash", "python",
         "markdown", "markdown_inline", "lua", "vim", "vimdoc" }) do
@@ -63,7 +63,7 @@ return {
           if not warm:is_closing() then warm:close() end
           return
         end
-        -- pcall: un lenguaje sin esa consulta (p. ej. context) no es un error.
+        -- pcall: a language without that query (e.g. context) is not an error.
         pcall(vim.treesitter.query.get, item[1], item[2])
         warm:start(30, 0, step)
       end)
@@ -74,11 +74,11 @@ return {
     end,
   },
 
-  -- 2. Sticky Scroll (Contexto incrustado)
+  -- 2. Sticky Scroll (embedded context)
   {
     "nvim-treesitter/nvim-treesitter-context",
     dependencies = { "nvim-treesitter/nvim-treesitter" },
-    -- Como mucho 3 líneas de contexto, y cada nodo en una sola línea.
+    -- At most 3 lines of context, and each node on a single line.
     opts = { max_lines = 3, multiline_threshold = 1 },
   },
 }

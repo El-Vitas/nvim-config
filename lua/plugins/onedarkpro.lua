@@ -1,6 +1,6 @@
 return {
   "olimorris/onedarkpro.nvim",
-  priority = 1000, -- Es crucial para asegurar que el tema cargue antes que el resto de la interfaz
+  priority = 1000, -- Crucial to make sure the theme loads before the rest of the UI
   config = function()
     local c = require("config.palette")
     require("onedarkpro").setup({
@@ -8,7 +8,7 @@ return {
         cursorline = true,
         transparency = true,
       },
-      -- Un poco de vida: itálicas y bold en lo importante.
+      -- A bit of life: italics and bold on the important parts.
       styles = {
         comments = "italic",
         keywords = "bold",
@@ -17,36 +17,36 @@ return {
       },
       highlights = {
         CursorLine = { bg = c.cursorline },
-        CursorLineNr = { fg = c.purple, bold = true }, -- número en morado
+        CursorLineNr = { fg = c.purple, bold = true }, -- number in purple
         LineNr = { fg = "#5b6078" },
       },
     })
 
-    -- Variante VIVID (más saturada que onedark base).
+    -- VIVID variant (more saturated than base onedark).
     vim.cmd("colorscheme onedark_vivid")
 
-    -- Highlights de neo-tree: se aplican por autocmd + vim.schedule para GANARLE
-    -- a los defaults que neo-tree fija al cargar (si no, no tomaban y las
-    -- carpetas quedaban grises).
+    -- neo-tree highlights: applied via autocmd + vim.schedule to BEAT
+    -- the defaults neo-tree sets on load (otherwise they did not take effect and
+    -- folders stayed gray).
     local function neotree_hl()
       local set = vim.api.nvim_set_hl
-      -- Carpetas en AZUL (no morado), root en dorado.
+      -- Folders in BLUE (not purple), root in gold.
       set(0, "NeoTreeDirectoryName", { fg = c.blue })
       set(0, "NeoTreeDirectoryIcon", { fg = c.blue })
       set(0, "NeoTreeRootName", { fg = c.gold, bold = true })
-      -- Archivo ACTUAL: fondo morado a nivel de línea (bg-only → conserva el color
-      -- del texto: los amarillos de git se mantienen). Mismo morado que la cursorline.
+      -- CURRENT file: purple background at line level (bg-only → keeps the text
+      -- color: the git yellows are preserved). Same purple as the cursorline.
       set(0, "NeoTreeCurrentFileBg", { bg = c.cursorline })
-      -- VIOLETA = cursor al navegar dentro del árbol (se mueve contigo).
+      -- VIOLET = cursor when navigating inside the tree (it moves with you).
       set(0, "NeoTreeCursorLine", { bg = c.cursorline })
-      -- El gris por defecto de neo-tree (#333539) es casi invisible: uno legible.
+      -- neo-tree's default gray (#333539) is almost invisible: a readable one.
       set(0, "NeoTreeDimText", { fg = c.gray })
       set(0, "NeoTreeMessage", { fg = c.gray, italic = true })
       set(0, "NeoTreeExpander", { fg = "#8087a2" })
-      set(0, "NeoTreeOpenedMarker", { fg = c.gold, bold = true }) -- ● de archivo abierto
-      -- Paleta git UNIFICADA (misma en scrollbar/gitsigns/statusline): verde=nuevo,
-      -- naranjo=modificado, rojo=borrado, azul=renombrado, gris=ignorado. Bold para
-      -- que las letras N/M/D/R del árbol se lean claras.
+      set(0, "NeoTreeOpenedMarker", { fg = c.gold, bold = true }) -- ● for an open file
+      -- UNIFIED git palette (same in scrollbar/gitsigns/statusline): green=new,
+      -- orange=modified, red=deleted, blue=renamed, gray=ignored. Bold so
+      -- the N/M/D/R letters in the tree read clearly.
       set(0, "NeoTreeGitAdded", { fg = c.green, bold = true })
       set(0, "NeoTreeGitUntracked", { fg = c.green, bold = true })
       set(0, "NeoTreeGitStaged", { fg = c.green, bold = true })
@@ -56,8 +56,8 @@ return {
       set(0, "NeoTreeGitRenamed", { fg = c.blue, bold = true })
       set(0, "NeoTreeGitConflict", { fg = c.red, bold = true })
       set(0, "NeoTreeGitIgnored", { fg = c.dim })
-      -- Colores de carpeta por nombre (Material Icon Theme-like). Ver FOLDER_ICONS
-      -- en neotree.lua. Paleta viva pero armónica con el tema.
+      -- Folder colors by name (Material Icon Theme-like). See FOLDER_ICONS
+      -- in neotree.lua. Vivid palette, yet harmonious with the theme.
       set(0, "ReviewMatBlue", { fg = c.blue })
       set(0, "ReviewMatGreen", { fg = c.green })
       set(0, "ReviewMatYellow", { fg = c.gold })
@@ -74,15 +74,15 @@ return {
       set(0, "ReviewMatGold", { fg = "#e0af68" })
       set(0, "ReviewMatSky", { fg = "#7dcfff" })
       set(0, "ReviewMatMauve", { fg = "#cba6f7" })
-      -- gitsigns: signos de la columna con la misma paleta.
+      -- gitsigns: column signs with the same palette.
       set(0, "GitSignsAdd", { fg = c.green })
       set(0, "GitSignsChange", { fg = c.orange })
       set(0, "GitSignsDelete", { fg = c.red })
-      -- Archivos NUEVOS (untracked): signo propio en VERDE (nuevo = como una
-      -- adición). gitsigns lo pinta en toda la columna del archivo nuevo.
+      -- NEW files (untracked): own sign in GREEN (new = like an
+      -- addition). gitsigns paints it across the whole column of the new file.
       set(0, "GitSignsUntracked", { fg = c.green })
     end
-    vim.schedule(neotree_hl) -- tras cargar neo-tree
+    vim.schedule(neotree_hl) -- after neo-tree loads
     vim.api.nvim_create_autocmd("ColorScheme", {
       group = vim.api.nvim_create_augroup("UserThemeHighlights", { clear = true }),
       callback = function() vim.schedule(neotree_hl) end,
