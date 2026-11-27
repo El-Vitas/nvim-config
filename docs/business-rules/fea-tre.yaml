@@ -3,8 +3,150 @@ name: Árbol de archivos y de cambios
 purpose: Qué muestra el panel lateral (archivos del proyecto o cambios pendientes) y cómo se abre, se cierra y se revela.
 scope: arbol
 rules:
-  - id: BR-124c6ce
+  - id: BR-1755c5c
     status: active
+    title: Opening the tree and switching files do not stall the editor
+    rule: >-
+      Opening or changing the tree mode (<leader>e, <leader>s) blocks the editor for less than 100 ms, and switching
+      buffer with the tree open for less than 5 ms, in a project of 1,400 files with an ignored folder of more than
+      500,000 files. Opening a file for the first time in the session blocks for less than 100 ms, also with a distant
+      comparison base and also after returning to the editor from another window. A higher cost is only allowed if a new
+      file type is opened in the first second and a half after startup.
+    why: >-
+      These are the actions the user performs dozens of times per hour. They used to take up to 4.5 s and 40 ms, and
+      opening a file stalled for up to 700 ms "sometimes" (the first time for each file type, and when coming back from
+      the browser). It was the main complaint.
+    context: >-
+      Measured in FastCase with Neovim 0.12.6 headless, base efe1a41 (22 commits back, 1,439 changed files).
+      Measurements and causes in docs/decisions.md (D-01 to D-05, D-21) and review-mode/docs/decisions.md (B22).
+    supersedes: BR-639a5ce
+    scenarios:
+      - title: Changes tree in a repo with a large node_modules
+        given: A repo with 1,400 versioned files and an ignored node_modules with 571,000 files
+        when: The user presses <leader>s
+        then: The changes tree appears in under 100 ms
+      - title: First TSX file of the session
+        given: The editor started a few seconds ago and no .tsx has been opened yet
+        when: The user opens a .tsx
+        then: It opens in under 100 ms
+      - title: Coming back from the browser
+        given: The user was in another window and git did not change
+        when: They return to the editor and open a file that is new relative to the base
+        then: It opens in under 100 ms
+  - id: BR-1b6bd73
+    status: active
+    title: The file tree hides what is ignored, shows dotfiles and never .git
+    rule: >-
+      The file tree hides git-ignored files, always shows dotfiles (.env, .gitignore) and never shows the .git folder.
+      The H toggle shows or hides the ignored ones, and the same toggle governs the file finder.
+    why: >-
+      Dotfiles are project files that the user edits; what is ignored is generated junk. If the tree and the finder had
+      different toggles, the same question would have two answers depending on where the user is standing.
+    supersedes: BR-124c6ce
+    scenarios:
+      - title: Initial state
+        given: Neovim just opened in a repo with an ignored node_modules and a .env
+        when: The user opens the file tree
+        then: They see .env and do not see node_modules or .git
+      - title: Toggle
+        given: The file tree is open and hides node_modules
+        when: The user presses H
+        then: node_modules appears in the tree and in the file finder; .git stays hidden
+  - id: BR-1f4aa60
+    status: active
+    title: Reveal the current file without changing mode
+    rule: >-
+      <leader>E reveals in the tree the file being edited without changing the tree's mode. In changes mode it only
+      reveals it if the file is among the changes; if it is not, it warns and does nothing.
+    why: >-
+      Revealing is for orienting yourself, not for changing view; jumping to files mode without being asked breaks the
+      review in progress.
+    supersedes: BR-f542f58
+    scenarios:
+      - title: File without changes in changes mode
+        given: The tree is in changes mode and the current file has no changes
+        when: The user presses <leader>E
+        then: A warning appears and the tree stays in changes mode
+  - id: BR-b60517d
+    status: active
+    title: The changes tree lists everything that changed and nothing that is ignored
+    rule: >-
+      The changes mode (<leader>s) shows modified, deleted, renamed and new files, including new files inside new
+      folders. It never shows git-ignored files.
+    why: >-
+      It is the view with which the user reviews what they are about to commit or review; a new file hidden inside a new
+      folder is exactly the one that gets forgotten.
+    context: Ignored files (for example node_modules) add nothing to that view and also made it slow (D-01).
+    supersedes: BR-8219e47
+    scenarios:
+      - title: New file in a new folder
+        given: nueva/sub/n.ts exists, uncommitted and outside the index
+        when: The user opens the changes tree
+        then: nueva/sub/n.ts appears marked as untracked
+      - title: Ignored folder
+        given: node_modules is in .gitignore and has files
+        when: The user opens the changes tree
+        then: node_modules does not appear
+  - id: BR-d511afd
+    status: active
+    title: The tree reopens in the same mode it was closed in
+    rule: >-
+      When the tree is closed and opened again with <leader>e, it comes back in the same mode (files or changes) it was
+      in when closed. If it was never opened, it opens in files mode.
+    why: >-
+      The user alternates between seeing the whole project and seeing only what changed; losing the mode when hiding the
+      panel forces them to choose it again every time.
+    context: >-
+      The "changes" mode also respects the review comparison base (base rule). Technical decision in docs/decisions.md
+      (D-08).
+    supersedes: BR-c15818c
+    scenarios:
+      - title: Reopen in changes mode
+        given: The tree is open in changes mode
+        when: The user presses <leader>e twice
+        then: The tree closes and opens again in changes mode
+      - title: First opening
+        given: The tree was never opened in the session
+        when: The user presses <leader>e
+        then: The tree opens in files mode
+  - id: BR-f9fe5f2
+    status: active
+    title: The open-file marker reflects what is in view
+    rule: >-
+      The tree marks with ● the files visible in some window. The marker appears when the file is shown in a window and
+      disappears when it is no longer visible in any, even if the buffer remains loaded.
+    why: >-
+      The marker helps locate in the tree what the user has on screen; a marker that stays stuck after closing a split
+      says something false.
+    context: Before this rule the marker stayed stuck when closing a split (D-03).
+    supersedes: BR-745f9f6
+    scenarios:
+      - title: Close a split
+        given: c.ts is open in a split and marked with ●
+        when: The user closes that split
+        then: The ● on c.ts disappears in under half a second
+  - id: BR-fd686d1
+    status: active
+    title: The changes tree compares against the base chosen in review
+    rule: >-
+      When the user has chosen a comparison base in review (a commit), the changes tree shows the changes against that
+      base, also when closing and reopening it and when revealing a file. With a HEAD or index base it shows the
+      uncommitted changes.
+    why: >-
+      A branch is reviewed against the commit where it started; if the tree showed only what is uncommitted, what is
+      already committed on the branch would disappear from the review.
+    supersedes: BR-1e58c05
+    scenarios:
+      - title: File committed after the base
+        given: The review base is the base commit and c.ts was added in a later commit
+        when: The user opens the changes tree
+        then: c.ts appears in the tree
+      - title: Reopening keeps the base
+        given: The changes tree shows c.ts by the chosen base
+        when: The user closes and reopens the tree with <leader>e
+        then: c.ts still appears
+  - id: BR-124c6ce
+    status: superseded
     title: El árbol de archivos oculta lo ignorado, muestra los dotfiles y nunca .git
     rule: >-
       El árbol de archivos oculta los archivos ignorados por git, muestra siempre los dotfiles (.env, .gitignore) y
@@ -14,6 +156,7 @@ rules:
       Los dotfiles son archivos del proyecto que el usuario edita; lo ignorado es basura generada. Si el árbol y el
       buscador tuvieran interruptores distintos, la misma pregunta tendría dos respuestas según dónde esté parado el
       usuario.
+    superseded_by: BR-1b6bd73
     scenarios:
       - title: Estado inicial
         given: Neovim recién abierto en un repo con node_modules ignorado y un .env
@@ -24,7 +167,7 @@ rules:
         when: El usuario aprieta H
         then: node_modules aparece en el árbol y en el buscador de archivos; .git sigue oculto
   - id: BR-1e58c05
-    status: active
+    status: superseded
     title: El árbol de cambios compara contra la base elegida en review
     rule: >-
       Cuando el usuario eligió una base de comparación en review (un commit), el árbol de cambios muestra los cambios
@@ -33,6 +176,7 @@ rules:
     why: >-
       La revisión de una rama se hace contra el commit donde empezó; si el árbol mostrara solo lo no commiteado, lo ya
       commiteado en la rama desaparecería de la revisión.
+    superseded_by: BR-fd686d1
     scenarios:
       - title: Archivo commiteado después de la base
         given: La base de review es el commit base y c.ts se agregó en un commit posterior
@@ -42,105 +186,6 @@ rules:
         given: El árbol de cambios muestra c.ts por la base elegida
         when: El usuario cierra y reabre el árbol con <leader>e
         then: c.ts sigue apareciendo
-  - id: BR-639a5ce
-    status: active
-    title: Abrir el árbol y cambiar de archivo no traban el editor
-    rule: >-
-      Abrir o cambiar el modo del árbol (<leader>e, <leader>s) bloquea el editor menos de 100 ms, y cambiar de buffer
-      con el árbol abierto menos de 5 ms, en un proyecto de 1 400 archivos con una carpeta ignorada de más de 500 000
-      archivos. Abrir un archivo por primera vez en la sesión bloquea menos de 100 ms, también con una base de
-      comparación lejana y también después de volver al editor desde otra ventana. Solo se admite un costo mayor si se
-      abre un tipo de archivo nuevo en el primer segundo y medio después de arrancar.
-    why: >-
-      Son las acciones que el usuario hace decenas de veces por hora. Antes tardaban hasta 4,5 s y 40 ms, y abrir un
-      archivo trababa hasta 700 ms "a veces" (la primera vez de cada tipo de archivo, y al volver del navegador). Era la
-      queja principal.
-    context: >-
-      Medido en FastCase con Neovim 0.12.6 sin interfaz, base efe1a41 (22 commits atrás, 1 439 archivos cambiados).
-      Mediciones y causas en docs/decisions.md (D-01 a D-05, D-21) y review-mode/docs/decisions.md (B22).
-    supersedes: BR-53dca84
-    scenarios:
-      - title: Árbol de cambios en un repo con node_modules grande
-        given: Un repo con 1 400 archivos versionados y node_modules ignorado con 571 000 archivos
-        when: El usuario aprieta <leader>s
-        then: El árbol de cambios aparece en menos de 100 ms
-      - title: Primer archivo TSX de la sesión
-        given: El editor arrancó hace unos segundos y todavía no se abrió ningún .tsx
-        when: El usuario abre un .tsx
-        then: Se abre en menos de 100 ms
-      - title: Volver del navegador
-        given: El usuario estuvo en otra ventana y git no cambió
-        when: Vuelve al editor y abre un archivo nuevo respecto de la base
-        then: Se abre en menos de 100 ms
-  - id: BR-745f9f6
-    status: active
-    title: El marcador de archivo abierto refleja lo que está a la vista
-    rule: >-
-      El árbol marca con ● los archivos visibles en alguna ventana. El marcador aparece al mostrar el archivo en una
-      ventana y desaparece cuando ya no está visible en ninguna, aunque el buffer siga cargado.
-    why: >-
-      El marcador sirve para ubicar en el árbol lo que el usuario tiene en pantalla; un marcador que queda pegado
-      después de cerrar un split dice algo falso.
-    context: Antes de esta regla el marcador quedaba pegado al cerrar un split (D-03).
-    scenarios:
-      - title: Cerrar un split
-        given: c.ts está abierto en un split y marcado con ●
-        when: El usuario cierra ese split
-        then: El ● de c.ts desaparece en menos de medio segundo
-  - id: BR-8219e47
-    status: active
-    title: El árbol de cambios lista todo lo que cambió y nada de lo ignorado
-    rule: >-
-      El modo cambios (<leader>s) muestra los archivos modificados, borrados, renombrados y nuevos, incluidos los
-      archivos nuevos dentro de carpetas nuevas. Nunca muestra archivos ignorados por git.
-    why: >-
-      Es la vista con la que el usuario revisa qué va a commitear o revisar; un archivo nuevo escondido dentro de una
-      carpeta nueva es justo el que se olvida.
-    context: Los archivos ignorados (por ejemplo node_modules) no aportan nada a esa vista y además la volvían lenta (D-01).
-    scenarios:
-      - title: Archivo nuevo en carpeta nueva
-        given: Existe nueva/sub/n.ts sin commitear y fuera del índice
-        when: El usuario abre el árbol de cambios
-        then: Aparece nueva/sub/n.ts marcado como no versionado
-      - title: Carpeta ignorada
-        given: node_modules está en .gitignore y tiene archivos
-        when: El usuario abre el árbol de cambios
-        then: node_modules no aparece
-  - id: BR-c15818c
-    status: active
-    title: El árbol se reabre en el mismo modo en que se cerró
-    rule: >-
-      Al cerrar el árbol y volver a abrirlo con <leader>e, el árbol vuelve en el mismo modo (archivos o cambios) en que
-      estaba al cerrarse. Si nunca se abrió, abre en modo archivos.
-    why: >-
-      El usuario alterna entre ver todo el proyecto y ver solo lo que cambió; perder el modo al ocultar el panel lo
-      obliga a volver a elegirlo cada vez.
-    context: >-
-      El modo "cambios" respeta además la base de comparación de review (regla de base). Decisión técnica en
-      docs/decisions.md (D-08).
-    scenarios:
-      - title: Reabrir en modo cambios
-        given: El árbol está abierto en modo cambios
-        when: El usuario aprieta <leader>e dos veces
-        then: El árbol se cierra y vuelve a abrir en modo cambios
-      - title: Primera apertura
-        given: El árbol nunca se abrió en la sesión
-        when: El usuario aprieta <leader>e
-        then: El árbol abre en modo archivos
-  - id: BR-f542f58
-    status: active
-    title: Revelar el archivo actual sin cambiar de modo
-    rule: >-
-      <leader>E revela en el árbol el archivo que se está editando sin cambiar el modo del árbol. En modo cambios solo
-      lo revela si el archivo está entre los cambios; si no lo está, avisa y no hace nada.
-    why: >-
-      Revelar es para ubicarse, no para cambiar de vista; saltar al modo archivos sin pedirlo rompe la revisión en
-      curso.
-    scenarios:
-      - title: Archivo sin cambios en modo cambios
-        given: El árbol está en modo cambios y el archivo actual no tiene cambios
-        when: El usuario aprieta <leader>E
-        then: Aparece un aviso y el árbol sigue en modo cambios
   - id: BR-53dca84
     status: superseded
     title: Abrir el árbol y cambiar de buffer no traban el editor
@@ -158,3 +203,107 @@ rules:
         given: Un repo con 1 400 archivos versionados y node_modules ignorado con 571 000 archivos
         when: El usuario aprieta <leader>s
         then: El árbol de cambios aparece en menos de 100 ms
+  - id: BR-639a5ce
+    status: superseded
+    title: Abrir el árbol y cambiar de archivo no traban el editor
+    rule: >-
+      Abrir o cambiar el modo del árbol (<leader>e, <leader>s) bloquea el editor menos de 100 ms, y cambiar de buffer
+      con el árbol abierto menos de 5 ms, en un proyecto de 1 400 archivos con una carpeta ignorada de más de 500 000
+      archivos. Abrir un archivo por primera vez en la sesión bloquea menos de 100 ms, también con una base de
+      comparación lejana y también después de volver al editor desde otra ventana. Solo se admite un costo mayor si se
+      abre un tipo de archivo nuevo en el primer segundo y medio después de arrancar.
+    why: >-
+      Son las acciones que el usuario hace decenas de veces por hora. Antes tardaban hasta 4,5 s y 40 ms, y abrir un
+      archivo trababa hasta 700 ms "a veces" (la primera vez de cada tipo de archivo, y al volver del navegador). Era la
+      queja principal.
+    context: >-
+      Medido en FastCase con Neovim 0.12.6 sin interfaz, base efe1a41 (22 commits atrás, 1 439 archivos cambiados).
+      Mediciones y causas en docs/decisions.md (D-01 a D-05, D-21) y review-mode/docs/decisions.md (B22).
+    supersedes: BR-53dca84
+    superseded_by: BR-1755c5c
+    scenarios:
+      - title: Árbol de cambios en un repo con node_modules grande
+        given: Un repo con 1 400 archivos versionados y node_modules ignorado con 571 000 archivos
+        when: El usuario aprieta <leader>s
+        then: El árbol de cambios aparece en menos de 100 ms
+      - title: Primer archivo TSX de la sesión
+        given: El editor arrancó hace unos segundos y todavía no se abrió ningún .tsx
+        when: El usuario abre un .tsx
+        then: Se abre en menos de 100 ms
+      - title: Volver del navegador
+        given: El usuario estuvo en otra ventana y git no cambió
+        when: Vuelve al editor y abre un archivo nuevo respecto de la base
+        then: Se abre en menos de 100 ms
+  - id: BR-745f9f6
+    status: superseded
+    title: El marcador de archivo abierto refleja lo que está a la vista
+    rule: >-
+      El árbol marca con ● los archivos visibles en alguna ventana. El marcador aparece al mostrar el archivo en una
+      ventana y desaparece cuando ya no está visible en ninguna, aunque el buffer siga cargado.
+    why: >-
+      El marcador sirve para ubicar en el árbol lo que el usuario tiene en pantalla; un marcador que queda pegado
+      después de cerrar un split dice algo falso.
+    context: Antes de esta regla el marcador quedaba pegado al cerrar un split (D-03).
+    superseded_by: BR-f9fe5f2
+    scenarios:
+      - title: Cerrar un split
+        given: c.ts está abierto en un split y marcado con ●
+        when: El usuario cierra ese split
+        then: El ● de c.ts desaparece en menos de medio segundo
+  - id: BR-8219e47
+    status: superseded
+    title: El árbol de cambios lista todo lo que cambió y nada de lo ignorado
+    rule: >-
+      El modo cambios (<leader>s) muestra los archivos modificados, borrados, renombrados y nuevos, incluidos los
+      archivos nuevos dentro de carpetas nuevas. Nunca muestra archivos ignorados por git.
+    why: >-
+      Es la vista con la que el usuario revisa qué va a commitear o revisar; un archivo nuevo escondido dentro de una
+      carpeta nueva es justo el que se olvida.
+    context: Los archivos ignorados (por ejemplo node_modules) no aportan nada a esa vista y además la volvían lenta (D-01).
+    superseded_by: BR-b60517d
+    scenarios:
+      - title: Archivo nuevo en carpeta nueva
+        given: Existe nueva/sub/n.ts sin commitear y fuera del índice
+        when: El usuario abre el árbol de cambios
+        then: Aparece nueva/sub/n.ts marcado como no versionado
+      - title: Carpeta ignorada
+        given: node_modules está en .gitignore y tiene archivos
+        when: El usuario abre el árbol de cambios
+        then: node_modules no aparece
+  - id: BR-c15818c
+    status: superseded
+    title: El árbol se reabre en el mismo modo en que se cerró
+    rule: >-
+      Al cerrar el árbol y volver a abrirlo con <leader>e, el árbol vuelve en el mismo modo (archivos o cambios) en que
+      estaba al cerrarse. Si nunca se abrió, abre en modo archivos.
+    why: >-
+      El usuario alterna entre ver todo el proyecto y ver solo lo que cambió; perder el modo al ocultar el panel lo
+      obliga a volver a elegirlo cada vez.
+    context: >-
+      El modo "cambios" respeta además la base de comparación de review (regla de base). Decisión técnica en
+      docs/decisions.md (D-08).
+    superseded_by: BR-d511afd
+    scenarios:
+      - title: Reabrir en modo cambios
+        given: El árbol está abierto en modo cambios
+        when: El usuario aprieta <leader>e dos veces
+        then: El árbol se cierra y vuelve a abrir en modo cambios
+      - title: Primera apertura
+        given: El árbol nunca se abrió en la sesión
+        when: El usuario aprieta <leader>e
+        then: El árbol abre en modo archivos
+  - id: BR-f542f58
+    status: superseded
+    title: Revelar el archivo actual sin cambiar de modo
+    rule: >-
+      <leader>E revela en el árbol el archivo que se está editando sin cambiar el modo del árbol. En modo cambios solo
+      lo revela si el archivo está entre los cambios; si no lo está, avisa y no hace nada.
+    why: >-
+      Revelar es para ubicarse, no para cambiar de vista; saltar al modo archivos sin pedirlo rompe la revisión en
+      curso.
+    superseded_by: BR-1f4aa60
+    scenarios:
+      - title: Archivo sin cambios en modo cambios
+        given: El árbol está en modo cambios y el archivo actual no tiene cambios
+        when: El usuario aprieta <leader>E
+        then: Aparece un aviso y el árbol sigue en modo cambios

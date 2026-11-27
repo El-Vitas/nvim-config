@@ -3,8 +3,28 @@ name: Archivos binarios
 purpose: Qué pasa al abrir imágenes, PDF, documentos de ofimática y comprimidos.
 scope: binarios
 rules:
-  - id: BR-802772a
+  - id: BR-eeeb1e0
     status: active
+    title: A binary file is opened with the system app or shown raw, never corrupted
+    rule: >-
+      When a binary file (image, PDF, office document, archive) is opened, the editor shows a help screen and offers to
+      open it with the system's default app (<leader>o) or to view its raw bytes (<leader>O). Saving from the help
+      screen never writes that text over the file.
+    why: >-
+      Dumping the bytes of a PNG on screen helps nobody, and a careless :w on the help screen would destroy the original
+      file.
+    supersedes: BR-802772a
+    scenarios:
+      - title: Open an image
+        given: The user opens logo.png
+        when: They choose "Open with system app"
+        then: The image opens in the system's default viewer
+      - title: Save the help screen
+        given: The help screen for logo.png is open
+        when: The user runs :w
+        then: logo.png does not change
+  - id: BR-802772a
+    status: superseded
     title: Un binario se abre con la app del sistema o se muestra crudo, nunca se corrompe
     rule: >-
       Al abrir un archivo binario (imagen, PDF, ofimática, comprimido), el editor muestra una pantalla de ayuda y ofrece
@@ -13,6 +33,7 @@ rules:
     why: >-
       Volcar los bytes de un PNG en pantalla no le sirve a nadie, y un :w distraído sobre la pantalla de ayuda
       destruiría el archivo original.
+    superseded_by: BR-eeeb1e0
     scenarios:
       - title: Abrir una imagen
         given: El usuario abre logo.png
